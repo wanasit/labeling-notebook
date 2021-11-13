@@ -3,8 +3,6 @@ import os
 from flask import Flask, jsonify, redirect
 from werkzeug.exceptions import HTTPException
 
-from server.models import db
-
 
 def create_app(
         instance_path=None,
@@ -17,9 +15,8 @@ def create_app(
                 instance_relative_config=True)
 
     # Apply API blueprints
-    from server import api_debug, api_auth
-    app.register_blueprint(api_auth.bp)
-    app.register_blueprint(api_debug.bp)
+    from server import api_files
+    app.register_blueprint(api_files.bp)
     # app.register_blueprint(other_api.bp)
 
     @app.errorhandler(ValueError)
@@ -35,7 +32,6 @@ def create_app(
         return redirect('/index.html', code=302)
 
     _init_temp_dir(app)
-    _init_database(app)
     return app
 
 
@@ -45,15 +41,3 @@ def _init_temp_dir(app):
     except OSError:
         pass
 
-
-def _init_database(app):
-    db_path = os.path.join(app.instance_path, "server.sqlite")
-    app.config.from_mapping(
-        SECRET_KEY='SECRET_KEY',
-        SQLALCHEMY_DATABASE_URI='sqlite:///' + db_path,
-        SQLALCHEMY_TRACK_MODIFICATIONS=False
-    )
-
-    with app.app_context():
-        db.init_app(app)
-        db.create_all()

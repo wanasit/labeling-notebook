@@ -5,19 +5,19 @@ import {responseInterface} from "swr/dist/types";
 const fetcher = (...args) => fetch(...args).then(res => res.json())
 
 
-//
+// Types
 
-interface User {
-    username: string
+interface FileStatus {
+    type: string
 }
 
-interface DebugStatus {
-    user?: User,
-    serverTime: number
+type FileList = {
+  [filename: string]: FileStatus;
 }
 
 // Hooks API
 
-export function useDebugStatusAPI() : responseInterface<DebugStatus, any> {
-    return useSWR('/api/debug', fetcher)
+export function useFileBrowsing(path: string) : responseInterface<FileList, any> {
+    const apiPath = path ? ('/api/files/ls/' + path) : '/api/files/ls'
+    return useSWR(apiPath, fetcher)
 }

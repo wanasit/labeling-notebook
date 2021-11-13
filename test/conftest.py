@@ -1,3 +1,4 @@
+import os
 import shutil
 import tempfile
 
@@ -5,19 +6,14 @@ import pytest
 
 from server import create_app
 
+module_dir = os.path.dirname(__file__)
 
 @pytest.fixture
 def app():
     """Create and configure a new app instance for each test."""
-    # create a temporary file to isolate the database for each test
-    tmp_path = tempfile.mkdtemp()
-    # create the app with common test config
-    app = create_app(instance_path=tmp_path)
 
-    yield app
-
-    # close and remove the temporary database
-    shutil.rmtree(tmp_path)
+    example_path = os.path.join(module_dir, './example')
+    return create_app(instance_path=example_path)
 
 
 @pytest.fixture
@@ -30,5 +26,3 @@ def client(app):
 def runner(app):
     """A test runner for the app's Click commands."""
     return app.test_cli_runner()
-
-
