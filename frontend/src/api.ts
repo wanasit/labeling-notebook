@@ -7,12 +7,33 @@ const fetcher = (...args) => fetch(...args).then(res => res.json())
 
 // Types
 
+
+
+
 // Hooks API
 
+export function useFileList(): responseInterface<any, any> {
+    return useSWR('/api/files', fetcher)
+}
 
+export function useImageData(key: string): [any, any] {
+    const url = '/api/file/image_data/' + key;
+    const {data, mutate} = useSWR(url, fetcher)
+    const setData = async (data: any) => {
+        const newData = await fetch(url, {
+            method: "PUT",
+            body: JSON.stringify(data)
+        })
 
+        mutate(newData)
+    }
 
-export function useFileList(path: string) : responseInterface<any, any> {
-    const apiPath = path ? ('/api/files/ls/' + path) : '/api/files/ls'
-    return useSWR(apiPath, fetcher)
+    return [data, setData];
+}
+
+function postData(key: string, data: any) {
+    return fetch('/api/file/image/' + key, {
+        method: "PUT",
+        body: JSON.stringify(data)
+    })
 }

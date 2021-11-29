@@ -9,11 +9,13 @@ from server import create_app
 module_dir = os.path.dirname(__file__)
 
 @pytest.fixture
-def app():
+def app(tmp_path):
     """Create and configure a new app instance for each test."""
-
     example_path = os.path.join(module_dir, './example')
-    return create_app(instance_path=example_path)
+    working_dir = str(tmp_path)
+
+    shutil.copytree(example_path, working_dir, dirs_exist_ok=True)
+    return create_app(instance_path=working_dir)
 
 
 @pytest.fixture
