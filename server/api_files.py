@@ -18,31 +18,37 @@ def list_directories(path):
     if not os.path.isdir(ls_path):
         return abort(404, "Directory not found")
 
-    output = defaultdict(dict)
+    output = []
     image_data = {}
-    for filename in os.listdir(ls_path):
+    for path, subdirs, files in os.walk(ls_path):
 
-        file_path = os.path.join(ls_path, filename)
-        if os.path.isdir(file_path):
-            output[filename]['type'] = 'DIR'
-            continue
 
-        name, ext = os.path.splitext(filename)
-        if ext in ('.jpg', '.png', '.jpeg'):
-            output[filename]['type'] = 'IMAGE'
-            continue
+        if path != ls_path:
+            relpath = os.path.relpath(path, ls_path)
+            if any([dirname.startswith('.') for dirname in relpath.split('/')]):
+                continue
 
-        if ext == '.json' and include_image_data:
-            image_data[name] = try_load_image_data_json(file_path)
-            continue
+            output.append({'key': relpath + '/'})
+        else:
+            relpath = ''
 
-    if include_image_data:
-        for filename, file_info in output.items():
+        for filename in files:
+            file_path = os.path.join(path, filename)
+            if os.path.isdir(file_path):
+                continue
+
             name, ext = os.path.splitext(filename)
-            if name in image_data:
-                file_info['data'] = image_data[name]
+            if ext in ('.jpg', '.png', '.jpeg'):
+                file_mtime = os.path.getmtime(file_path)
+                file_size = os.path.getsize(file_path)
+                output.append({
+                    'key': os.path.join(relpath, filename),
+                    'size': file_size,
+                    'modified': file_mtime * 1000
+                })
+                continue
 
-    return output
+    return jsonify(output)
 
 
 @bp.route("image/<path:path>", methods=("GET",))
@@ -60,9 +66,6 @@ def get_image(path):
 def get_image_data(path):
     instance_path = current_app.instance_path
     image_path = os.path.join(instance_path, path)
-
-    if not os.path.isfile(image_path):
-        return abort(404, "File not found")
 
     name, ext = os.path.splitext(image_path)
     data_path = name + '.json'
