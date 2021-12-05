@@ -42,7 +42,7 @@ export default function ImageBrowser(props: {
     onSelectImage?: (imagePath: string) => void,
 }) {
 
-    const {data} = useFileList('');
+    const {data} = useFileList();
     const files = data ? data : [];
     return <Wrapper>
         <FileBrowser

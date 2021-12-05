@@ -9,54 +9,53 @@ import 'react-keyed-file-browser/dist/react-keyed-file-browser.css';
 import Dock from "react-dock";
 import ImageBrowser from "./components/ImageBrowser";
 import ImageAnnotator from "./components/ImageAnnotator";
-import {SplitView} from "./components/SplitView";
+import {SplitViewComponentsSize, SplitView} from "./components/SplitView";
 import {BrowserRouter, generatePath, useHistory, useParams, useRouteMatch} from "react-router-dom";
 import {StringParam, useQueryParam} from "use-query-params";
 import ImageDataEditor from "./components/ImageDataEditor";
 
 
 export default function App() {
-    const [src, setSrc] = useQueryParam('foo', StringParam);
+    const [src, setSrc] = useQueryParam('src', StringParam);
     const [annotations, setAnnotations] = useState([
         {x: 15, y: 50, width: 200, height: 30},
         {x: 15, y: 250, width: 200, height: 30, text: "abcdefg"},
     ])
 
+    const [viewComponentsSize, setViewComponentsSize] = useState<SplitViewComponentsSize>({
+        left: {width: 350, height: -1},
+        right: {width: 350, height: -1},
+        center: {width: -1, height: -1}
+    })
+
     return (
         <AppContainer>
             <SplitView
-                left={
+                componentsSize={viewComponentsSize}
+                onComponentsResize={(newSize) => setViewComponentsSize(newSize)}
+                leftPane={
                     <SidebarFrame>
                         <ImageBrowser
                             onSelectImage={imagePath => setSrc(imagePath)}
                         />
                     </SidebarFrame>
                 }
-                right={
-                    <AppFrame>
-                        <SplitView
-                            left={
-                                <ImageFrame>
-                                    <ImageAnnotator
-                                        src={src ? toImageUrl(src) : ''}
-                                        annotations={annotations}
-                                        onChangeAnnotations={setAnnotations}
-                                    />
-                                </ImageFrame>
-
-                            }
-                            initialLeftWidth={1000}
-                            right={
-                                <ImageDataEditor
-                                    annotations={annotations}
-                                    onChangeAnnotations={setAnnotations}
-                                />
-                            }
-                        />
-
-                    </AppFrame>
+                rightPane={
+                    <ImageDataEditor
+                        annotations={annotations}
+                        onChangeAnnotations={setAnnotations}
+                    />
                 }
-            />
+            >
+                <ImageFrame>
+                    <ImageAnnotator
+                        src={src ? toImageUrl(src) : ''}
+                        annotations={annotations}
+                        onChangeAnnotations={setAnnotations}
+                    />
+                </ImageFrame>
+            </SplitView>
+
         </AppContainer>
     );
 }

@@ -1,80 +1,78 @@
 import React, {createRef, useEffect, useState} from "react";
 import styled from "styled-components";
+import {Size} from "../utils/types";
 
 const MIN_WIDTH = 75;
 
-interface SplitViewProps {
-    left: React.ReactElement;
-    right: React.ReactElement;
-    className?: string;
-    initialLeftWidth?: number;
+
+export interface SplitViewComponentsSize {
+    left: Size,
+    right: Size,
+    center: Size
 }
 
-const LeftPane: React.FunctionComponent<{
-    leftWidth: number | undefined;
-    setLeftWidth: (value: number) => void;
-}> = ({children, leftWidth, setLeftWidth}) => {
-    const leftRef = createRef<HTMLDivElement>();
+export interface SplitViewProps {
+    leftPane: React.ReactElement;
+    rightPane: React.ReactElement;
+    className?: string;
+    initialLeftWidth?: number;
+    componentsSize: SplitViewComponentsSize,
+    onComponentsResize?: (size: SplitViewComponentsSize) => void;
+}
 
-    useEffect(() => {
-        if (leftRef.current) {
-            if (!leftWidth) {
-                setLeftWidth(leftRef.current.clientWidth);
-                return;
-            }
-
-            leftRef.current.style.width = `${leftWidth}px`;
-        }
-    }, [leftRef, leftWidth, setLeftWidth]);
-
-    return <LeftPaneDiv ref={leftRef}>{children}</LeftPaneDiv>;
-};
 
 export const SplitView: React.FunctionComponent<SplitViewProps> = (
     {
-        left,
-        right,
+        leftPane,
+        rightPane,
         className,
-        initialLeftWidth = 350
+        componentsSize,
+        onComponentsResize,
+        children,
     }) => {
-    const [leftWidth, setLeftWidth] = useState<undefined | number>(initialLeftWidth);
-    const [separatorXPosition, setSeparatorXPosition] = useState<undefined | number>(undefined);
-    const [dragging, setDragging] = useState(false);
-
     const splitPaneRef = createRef<HTMLDivElement>();
+    const [dragging, setDragging] = useState<null | DraggingState>(null);
 
-    const onMouseDown = (e: React.MouseEvent) => {
-        setSeparatorXPosition(e.clientX);
-        setDragging(true);
-    };
-
-    const onTouchStart = (e: React.TouchEvent) => {
-        setSeparatorXPosition(e.touches[0].clientX);
-        setDragging(true);
-    };
+    const leftWidth = componentsSize.left.width;
+    const rightWidth = componentsSize.right.width;
 
     const onMove = (clientX: number) => {
-        if (dragging && leftWidth && separatorXPosition) {
-            const newLeftWidth = leftWidth + clientX - separatorXPosition;
-            setSeparatorXPosition(clientX);
-
-            if (newLeftWidth < MIN_WIDTH) {
-                setLeftWidth(MIN_WIDTH);
-                return;
-            }
-
-            if (splitPaneRef.current) {
-                const splitPaneWidth = splitPaneRef.current.clientWidth;
-
-                if (newLeftWidth > splitPaneWidth - MIN_WIDTH) {
-                    setLeftWidth(splitPaneWidth - MIN_WIDTH);
-                    return;
-                }
-            }
-
-            setLeftWidth(newLeftWidth);
+        if (!dragging || !splitPaneRef.current) {
+            return;
         }
+
+        let newLeftWidth = leftWidth;
+        let newRightWidth = rightWidth;
+        if (dragging.resizingTarget == 'leftPane') {
+            newLeftWidth = leftWidth + clientX - dragging.xPosition;
+        }
+
+        if (dragging.resizingTarget == 'rightPane') {
+            newRightWidth = rightWidth - clientX + dragging.xPosition;
+        }
+
+        setSideViewsSize(newLeftWidth, newRightWidth);
+        setDragging({...dragging, xPosition: clientX});
     };
+
+    const setSideViewsSize = (newLeftWidth: number, newRightWidth: number) => {
+        if (!splitPaneRef.current) {
+            return;
+        }
+
+        let height = splitPaneRef.current.clientHeight;
+        let totalWidth = splitPaneRef.current.clientWidth;
+        let newCenterWidth = totalWidth - newRightWidth - newLeftWidth;
+        if (onComponentsResize) {
+            onComponentsResize({
+                left: {height, width: newLeftWidth},
+                center: {height, width: newCenterWidth},
+                right: {height, width: newRightWidth}
+            })
+        }
+    }
+
+
 
     const onMouseMove = (e: MouseEvent) => {
         e.preventDefault();
@@ -86,7 +84,7 @@ export const SplitView: React.FunctionComponent<SplitViewProps> = (
     };
 
     const onMouseUp = () => {
-        setDragging(false);
+        setDragging(null);
     };
 
     React.useEffect(() => {
@@ -103,19 +101,61 @@ export const SplitView: React.FunctionComponent<SplitViewProps> = (
 
     return (
         <SplitViewDiv className={`${className ?? ""}`} ref={splitPaneRef}>
-            <LeftPane leftWidth={leftWidth} setLeftWidth={setLeftWidth}>
-                {left}
-            </LeftPane>
-            <DividerHitbox
-                onMouseDown={onMouseDown}
-                onTouchStart={onTouchStart}
-                onTouchEnd={onMouseUp}
-            >
-                <Divider/>
-            </DividerHitbox>
-            <RightPane>{right}</RightPane>
+            <SidePane width={leftWidth} setWidth={(newLeftWidth) => setSideViewsSize(newLeftWidth, rightWidth)}>
+                {leftPane}
+            </SidePane>
+            <Divider
+                onDraggingStart={xPosition => setDragging({xPosition, resizingTarget: 'leftPane'})}
+                onDraggingEnd={() => setDragging(null)}
+            />
+            <Main>{children}</Main>
+            <Divider
+                onDraggingStart={xPosition => setDragging({xPosition, resizingTarget: 'rightPane'})}
+                onDraggingEnd={() => setDragging(null)}
+            />
+            <SidePane width={rightWidth} setWidth={(newRightWidth) => setSideViewsSize(leftWidth, newRightWidth)}>
+                {rightPane}
+            </SidePane>
         </SplitViewDiv>
     );
+};
+
+interface DraggingState {
+    xPosition: number,
+    resizingTarget: 'leftPane' | 'rightPane'
+}
+
+const Divider: React.FunctionComponent<{
+    onDraggingStart: (xPosition: number) => void,
+    onDraggingEnd: () => void
+}> = ({onDraggingStart, onDraggingEnd}) => {
+    return <DividerHitbox
+        onMouseDown={(e) => onDraggingStart(e.clientX)}
+        onTouchStart={(e) => onDraggingStart(e.touches[0].clientX)}
+        onTouchEnd={onDraggingEnd}
+    >
+        <DividerInner/>
+    </DividerHitbox>
+}
+
+const SidePane: React.FunctionComponent<{
+    width: number | undefined;
+    setWidth: (value: number) => void;
+}> = ({children, width, setWidth}) => {
+    const ref = createRef<HTMLDivElement>();
+
+    useEffect(() => {
+        if (ref.current) {
+            if (!width) {
+                setWidth(ref.current.clientWidth);
+                return;
+            }
+
+            ref.current.style.width = `${width}px`;
+        }
+    }, [ref, width, setWidth]);
+
+    return <SidePaneDiv ref={ref}>{children}</SidePaneDiv>;
 };
 
 const DividerHitbox = styled.div`
@@ -126,16 +166,16 @@ const DividerHitbox = styled.div`
   padding: 0 2px;
 `
 
-const Divider = styled.div`
+const DividerInner = styled.div`
   height: 100%;
   border: 1px solid #eee;
 `
 
-const LeftPaneDiv = styled.div`
+const SidePaneDiv = styled.div`
   overflow: hidden;
   height: 100%;
 `
-const RightPane = styled.div`
+const Main = styled.div`
   flex: 1;
   height: 100%;
   overflow-x: hidden;
