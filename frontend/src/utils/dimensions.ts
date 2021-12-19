@@ -1,5 +1,5 @@
 import { useState, useCallback, useLayoutEffect } from "react";
-import {Rectangle} from "./types";
+import {Rectangle} from "./shapes";
 
 export type UseDimensionsHook = [
     (node: HTMLElement) => void,

@@ -1,6 +1,6 @@
-import React, {createRef, useEffect, useState} from "react";
+import React, {createRef, useEffect, useLayoutEffect, useState} from "react";
 import styled from "styled-components";
-import {Size} from "../utils/types";
+import {Size} from "../utils/shapes";
 
 const MIN_WIDTH = 75;
 
@@ -12,8 +12,8 @@ export interface SplitViewComponentsSize {
 }
 
 export interface SplitViewProps {
-    leftPane: React.ReactElement;
-    rightPane: React.ReactElement;
+    leftPane?: React.ReactElement | null;
+    rightPane?: React.ReactElement | null;
     className?: string;
     initialLeftWidth?: number;
     componentsSize: SplitViewComponentsSize,
@@ -73,7 +73,6 @@ export const SplitView: React.FunctionComponent<SplitViewProps> = (
     }
 
 
-
     const onMouseMove = (e: MouseEvent) => {
         e.preventDefault();
         onMove(e.clientX);
@@ -99,6 +98,21 @@ export const SplitView: React.FunctionComponent<SplitViewProps> = (
         };
     });
 
+    useLayoutEffect(() => {
+        if (splitPaneRef.current) {
+
+            const measure = () => window.requestAnimationFrame(
+                () => setSideViewsSize(leftWidth, rightWidth));
+            measure();
+            window.addEventListener("resize", measure);
+            window.addEventListener("scroll", measure);
+            return () => {
+                window.removeEventListener("resize", measure);
+                window.removeEventListener("scroll", measure);
+            };
+        }
+    }, [splitPaneRef]);
+
     return (
         <SplitViewDiv className={`${className ?? ""}`} ref={splitPaneRef}>
             <SidePane width={leftWidth} setWidth={(newLeftWidth) => setSideViewsSize(newLeftWidth, rightWidth)}>
@@ -109,13 +123,19 @@ export const SplitView: React.FunctionComponent<SplitViewProps> = (
                 onDraggingEnd={() => setDragging(null)}
             />
             <Main>{children}</Main>
-            <Divider
-                onDraggingStart={xPosition => setDragging({xPosition, resizingTarget: 'rightPane'})}
-                onDraggingEnd={() => setDragging(null)}
-            />
-            <SidePane width={rightWidth} setWidth={(newRightWidth) => setSideViewsSize(leftWidth, newRightWidth)}>
-                {rightPane}
-            </SidePane>
+
+            {rightPane && <>
+                <Divider
+                    onDraggingStart={xPosition => setDragging({xPosition, resizingTarget: 'rightPane'})}
+                    onDraggingEnd={() => setDragging(null)}
+                />
+                <SidePane width={rightWidth} setWidth={(newRightWidth) => setSideViewsSize(leftWidth, newRightWidth)}>
+                    {rightPane}
+                </SidePane>
+            </>
+            }
+
+
         </SplitViewDiv>
     );
 };
@@ -163,12 +183,11 @@ const DividerHitbox = styled.div`
   align-self: stretch;
   display: flex;
   align-items: center;
-  padding: 0 2px;
 `
 
 const DividerInner = styled.div`
   height: 100%;
-  border: 1px solid #eee;
+  border: 1px solid #ddd;
 `
 
 const SidePaneDiv = styled.div`

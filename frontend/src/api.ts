@@ -1,18 +1,25 @@
 import useSWR from "swr"
 import {responseInterface} from "swr/dist/types";
-import {Rectangle, Size} from "./utils/types";
+import {Rectangle, Size} from "./utils/shapes";
 import React from "react";
 import {ImageInfo} from "./utils/useImageInfo";
 
 // @ts-ignore
-const fetcher = (...args) => fetch(...args).then(res => res.json())
+const fetcher = (...args) => fetch(...args).then(res => {
+    if (!res.ok) {
+        return null;
+    }
+
+    return res.json()
+});
 
 
 // Types
 
 export declare type Image = {
-    element?: HTMLImageElement,
-    size?: Size,
+    element: HTMLImageElement,
+    width: number,
+    height: number,
 }
 
 export declare type ImageData = {
@@ -26,9 +33,9 @@ export function useFileList(): responseInterface<any, any> {
     return useSWR('/api/files', fetcher)
 }
 
-export function useImage(key?: string): [Image | null] {
+export function useImage(key?: string | null): [Image | null] {
     // Ref: https://github.com/konvajs/use-image/blob/master/index.js
-    const url = '/api/file/image/' + key;
+    const url = key ? '/api/files/image/' + key : null;
     const [state, setState] = React.useState<Image | null>(null);
 
     React.useEffect(
@@ -41,7 +48,8 @@ export function useImage(key?: string): [Image | null] {
             function onload() {
                 setState({
                     element: img,
-                    size: {width: img.width, height: img.height}
+                    width: img.width,
+                    height: img.height
                 });
             }
 
@@ -64,8 +72,8 @@ export function useImage(key?: string): [Image | null] {
     return [state];
 }
 
-export function useImageData(key: string): [ImageData, (data: ImageData) => void] {
-    const url = '/api/file/image_data/' + key;
+export function useImageData(key?: string | null): [ImageData|null, (data: ImageData) => void] {
+    const url = key ? '/api/files/image_data/' + key : '';
     const {data, mutate} = useSWR(url, fetcher)
     const setData = async (data: ImageData) => {
         const newData = await fetch(url, {
@@ -73,7 +81,7 @@ export function useImageData(key: string): [ImageData, (data: ImageData) => void
             body: JSON.stringify(data)
         })
 
-        mutate(newData)
+        mutate({...data, ...newData})
     }
 
     return [data, setData];

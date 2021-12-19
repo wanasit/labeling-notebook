@@ -7,6 +7,10 @@ declare module 'react-image-annotation' {
     export = <any>{};
 }
 
+declare module 'color-hash' {
+    export = <any>{};
+}
+
 declare module 'jsoneditor-react' {
     export class JsonEditor extends React.Component<JsonEditorProps> {
         jsonEditor: any;

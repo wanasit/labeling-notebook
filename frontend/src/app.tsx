@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import ReactDOM from 'react-dom';
 
 import styled from "styled-components";
@@ -6,62 +6,132 @@ import styled from "styled-components";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-keyed-file-browser/dist/react-keyed-file-browser.css';
 
-import Dock from "react-dock";
 import ImageBrowser from "./components/ImageBrowser";
-import ImageAnnotator from "./components/ImageAnnotator";
 import {SplitViewComponentsSize, SplitView} from "./components/SplitView";
-import {BrowserRouter, generatePath, useHistory, useParams, useRouteMatch} from "react-router-dom";
-import {StringParam, useQueryParam} from "use-query-params";
+import {NumberParam, StringParam, useQueryParam} from "use-query-params";
 import ImageDataEditor from "./components/ImageDataEditor";
+import {useImage, useImageData} from "./api";
+import AnnotatedImage from "./components/AnnotatedImage";
+import ColorHash from 'color-hash'
+
+const annotationColors = [
+    {lightness: 0.5, saturation: 0.7, hue: 220},
+    {lightness: 0.5, saturation: 1.0, hue: 200},
+]
 
 
 export default function App() {
-    const [src, setSrc] = useQueryParam('src', StringParam);
-    const [annotations, setAnnotations] = useState([
-        {x: 15, y: 50, width: 200, height: 30},
-        {x: 15, y: 250, width: 200, height: 30, text: "abcdefg"},
-    ])
+    const [key, setKey] = useQueryParam('key', StringParam);
+    const [selectedAnnotationIdx, setSelectedAnnotationIdx] = useQueryParam('index', NumberParam);
+
+    const [image] = useImage(key);
+    const [imageData, setImageData] = useImageData(key);
+
+
+    const annotations = imageData?.annotations || [];
+    const extendedAnnotations = useMemo(() => annotations.map((a, i) => {
+        const colorHash = i === selectedAnnotationIdx ?
+            new ColorHash(annotationColors[1]):
+            new ColorHash(annotationColors[0]);
+        return {...a, color: colorHash.hex('')}
+    }), [imageData, selectedAnnotationIdx]);
+
+    const setAnnotations = (annotations: any[]) => {
+        annotations.forEach(a => {
+            delete a.color;
+        })
+        setImageData({...imageData, annotations})
+    }
+
+    const tags = imageData?.tags || [];
+    const setTags = (tags: any) => {
+        setImageData({...imageData, tags})
+    }
 
     const [viewComponentsSize, setViewComponentsSize] = useState<SplitViewComponentsSize>({
         left: {width: 350, height: -1},
-        right: {width: 350, height: -1},
-        center: {width: -1, height: -1}
+        right: {width: 450, height: -1},
+        center: {width: 100, height: -1}
     })
+
+    const onKeyPress = (e: KeyboardEvent) => {
+        if (e.target !== document.body) {
+            return;
+        }
+
+
+        if (e.key === 'Escape') {
+            setSelectedAnnotationIdx(undefined);
+        }
+
+        if (e.key === 'Backspace') {
+            if (selectedAnnotationIdx != null) {
+                annotations.splice(selectedAnnotationIdx, 1);
+                setAnnotations(annotations);
+            }
+
+            setSelectedAnnotationIdx(undefined);
+        }
+    }
+
+    useEffect(() => {
+        window.addEventListener('keydown', onKeyPress);
+        return () => {
+            window.removeEventListener('keydown', onKeyPress);
+        };
+    })
+
 
     return (
         <AppContainer>
             <SplitView
                 componentsSize={viewComponentsSize}
-                onComponentsResize={(newSize) => setViewComponentsSize(newSize)}
+                onComponentsResize={(newSize) => {
+                    setViewComponentsSize(newSize)
+                }}
                 leftPane={
                     <SidebarFrame>
                         <ImageBrowser
-                            onSelectImage={imagePath => setSrc(imagePath)}
+                            onSelectImage={imagePath => {
+                                setKey(imagePath)
+                                setSelectedAnnotationIdx(null);
+                            }}
                         />
                     </SidebarFrame>
                 }
                 rightPane={
-                    <ImageDataEditor
-                        annotations={annotations}
+                    image && <ImageDataEditor
+                        imageInfo={
+                            {
+                                name: key || '',
+                                width: image.width,
+                                height: image.height
+                            }}
+                        tags={tags}
+                        onChangeTags={setTags}
+
+                        annotations={extendedAnnotations}
+                        selectedAnnotation={selectedAnnotationIdx}
+                        onSelectAnnotation={setSelectedAnnotationIdx}
                         onChangeAnnotations={setAnnotations}
                     />
                 }
             >
-                <ImageFrame>
-                    <ImageAnnotator
-                        src={src ? toImageUrl(src) : ''}
-                        annotations={annotations}
+                {image && image.element && <ImageFrame>
+                    <AnnotatedImage
+                        width={viewComponentsSize.center.width}
+                        height={viewComponentsSize.center.height}
+                        image={image}
+                        annotations={extendedAnnotations}
+                        selectedAnnotation={selectedAnnotationIdx}
+                        onSelectAnnotation={setSelectedAnnotationIdx}
                         onChangeAnnotations={setAnnotations}
                     />
-                </ImageFrame>
+                </ImageFrame>}
             </SplitView>
 
         </AppContainer>
     );
-}
-
-function toImageUrl(src: string): string {
-    return '/api/files/image/' + src;
 }
 
 

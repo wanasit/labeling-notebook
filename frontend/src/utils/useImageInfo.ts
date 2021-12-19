@@ -1,5 +1,5 @@
 import React from "react";
-import {Size} from "./types";
+import {Size} from "./shapes";
 
 /**
  * Improved version from useImage
