@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "labelling-notebook"
+version = "0.2.0"
+description = "An image annotation or labelling tool for small project"
+authors = ["Wanasit "]
+license = "MIT License"
+packages = [
+    { include = "labelling" },
+]
+include = ["frontend/build/**/*.*"]
+
+[tool.poetry.scripts]
+label = 'labelling.__main__:main'
+
+[tool.poetry.dependencies]
+python = "^3.7"
+Flask="^2.0.1"
+
+[tool.poetry.dev-dependencies]
+pytest="^6.2.5"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

@@ -1,10 +1,9 @@
 import os
 import shutil
-import tempfile
 
 import pytest
 
-from server import create_app
+from labelling.notebook import create_app
 
 module_dir = os.path.dirname(__file__)
 
