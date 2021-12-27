@@ -22,9 +22,6 @@ export default function App() {
 
     const annotations = imageData?.annotations || [];
     const setAnnotations = (annotations: any[]) => {
-        annotations.forEach(a => {
-            delete a.color;
-        })
         setImageData({...imageData, annotations})
     }
 
@@ -85,12 +82,8 @@ export default function App() {
                 }
                 rightPane={
                     image && <ImageDataEditor
-                        imageInfo={
-                            {
-                                name: key || '',
-                                width: image.width,
-                                height: image.height
-                            }}
+                        image={image}
+
                         tags={tags}
                         onChangeTags={setTags}
 

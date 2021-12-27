@@ -19,6 +19,7 @@ export const DEFAULT_ANNOTATION_COLOR = new ColorHash({lightness: 0.5, saturatio
 export const DEFAULT_ANNOTATION_SELECTED_COLOR = new ColorHash({lightness: 0.5, saturation: 1.0, hue: 200}).hex('');
 
 export interface Image {
+    key: string,
     element: HTMLImageElement,
     width: number,
     height: number,
@@ -54,6 +55,7 @@ export function useImage(key?: string | null): [Image | null] {
 
             function onload() {
                 setState({
+                    key: key || '',
                     element: img,
                     width: img.width,
                     height: img.height

@@ -5,21 +5,15 @@ import AceEditor from "react-ace";
 
 import "ace-builds/src-noconflict/mode-json";
 import "ace-builds/src-noconflict/theme-github";
-import {Rectangle} from "../utils/shapes";
 
 import Creatable from 'react-select/creatable';
 import {Button} from "react-bootstrap";
-import {Annotation, DEFAULT_ANNOTATION_COLOR, DEFAULT_ANNOTATION_SELECTED_COLOR} from "../api";
+import {Annotation, DEFAULT_ANNOTATION_COLOR, DEFAULT_ANNOTATION_SELECTED_COLOR, Image} from "../api";
 
-export interface ImageInfo {
-    name: string
-    width: number,
-    height: number,
-}
 
 export default function ImageDataEditor(props: {
 
-    imageInfo?: ImageInfo,
+    image?: Image,
 
     tags: string[],
     onChangeTags?: (tags: string[]) => void,
@@ -31,35 +25,27 @@ export default function ImageDataEditor(props: {
 }) {
 
     const {
-        imageInfo,
+        image,
         tags,
         annotations,
         selectedAnnotation,
-        onSelectAnnotation,
-        onChangeTags,
-        onChangeAnnotations
+        onSelectAnnotation = () => null,
+        onChangeTags = () => null,
+        onChangeAnnotations = () => null
     } = props;
 
     const [options, setOptions] = useTagsAsOptions(tags, onChangeTags);
     const [annotationContents, setAnnotationContent, resetAnnotationContent, saveAnnotationContent] =
         useAnnotationContents(annotations, onChangeAnnotations);
 
-    const clearAnnotationSelection = (i: number) => {
-        if (onSelectAnnotation && selectedAnnotation === i) {
-            onSelectAnnotation(undefined)
-        }
-    }
-    const setAnnotationSelection = (i: number) => {
-        if (onSelectAnnotation) {
-            onSelectAnnotation(i)
-        }
-    }
+    const clearAnnotationSelection = (i: number) => onSelectAnnotation(undefined);
+    const setAnnotationSelection = (i: number) => onSelectAnnotation(i);
 
     return <ImageDataFrame>
 
-        {imageInfo && <HeaderSection>
-            <h4>{imageInfo.name}</h4>
-            <p>{imageInfo.width} x {imageInfo.height}</p>
+        {image && <HeaderSection>
+            <h4>{image.key}</h4>
+            <p>{image.width} x {image.height}</p>
         </HeaderSection>
         }
 
@@ -101,22 +87,21 @@ export default function ImageDataEditor(props: {
                         {
                             annotationContents[i] && <>
                                 <AceEditor
-                                    value={annotationContents[i]}
+                                    value={annotationContents[i].value}
                                     mode="json"
                                     theme="github"
                                     width="100%"
-                                    height={`${annotationContents[i].split('\n').length * 20}px`}
+                                    height={`${annotationContents[i].value.split('\n').length * 20}px`}
                                     onChange={(value) => setAnnotationContent(i, value)}
-                                    cursorStart={annotationContents[i].length - 1}
                                 />
-                                <Button size="sm" variant="primary" disabled={!isJsonString(annotationContents[i])} onClick={() => {
-                                    clearAnnotationSelection(i);
-                                    saveAnnotationContent(i);
-                                }}>Save</Button>
+                                <Button size="sm" variant="primary"
+                                        disabled={!annotationContents[i].isJson}
+                                        onClick={() => {
+                                            clearAnnotationSelection(i);
+                                            saveAnnotationContent(i);
+                                        }}>Save</Button>
                             </>
                         }
-
-
                     </Collapsible>
                 })
             }
@@ -129,10 +114,15 @@ interface TagOption {
     label: string
 }
 
+interface AnnotationContent {
+    value: string,
+    isJson: boolean,
+}
+
 function useTagsAsOptions(tags: string[], onChangeTags?: (tags: string[]) => void):
     [TagOption[], (options: readonly TagOption[]) => void] {
 
-    const options = tags.map((tag) => ({value: tag, label: tag}));
+    const options = useMemo(() => tags.map((tag) => ({value: tag, label: tag})), [tags]) ;
     const setOptions = (options: readonly TagOption[]) => {
         if (onChangeTags) {
             const tags = options.map(o => o.value);
@@ -143,10 +133,10 @@ function useTagsAsOptions(tags: string[], onChangeTags?: (tags: string[]) => voi
     return [options, setOptions]
 }
 
-function useAnnotationContents(annotations: Annotation[], onChangeAnnotations?: (annotations: Annotation[]) => void):
-    [string[], (i: number, newContent: string) => void, (i: number) => void, (i: number) => void] {
+function useAnnotationContents(annotations: Annotation[], onChangeAnnotations: (annotations: Annotation[]) => void):
+    [AnnotationContent[], (i: number, newContent: string) => void, (i: number) => void, (i: number) => void] {
 
-    const annotationOriginalContents: string[] = useMemo(() => annotations.map(annotation => {
+    const annotationOriginalContents: AnnotationContent[] = useMemo(() => annotations.map(annotation => {
         const annotationContent = {...annotation};
         const rectInfo = `{\n  "x":${annotation['x']}, "y":${annotation['y']}, "width":${annotation['width']}, "height":${annotation['height']},\n`
         delete annotationContent['x'];
@@ -154,7 +144,13 @@ function useAnnotationContents(annotations: Annotation[], onChangeAnnotations?: 
         delete annotationContent['width'];
         delete annotationContent['height'];
 
-        return JSON.stringify(annotationContent, null, 2).replace("{", rectInfo).replace("\n\n", "\n");
+        const value = JSON.stringify(annotationContent, null, 2)
+                .replace("{", rectInfo)
+                .replace("\n\n", "\n");
+        return {
+            value: value,
+            isJson: true
+        };
     }), [annotations]);
 
     const [annotationContents, setAnnotationContents] = useState(annotationOriginalContents);
@@ -163,7 +159,8 @@ function useAnnotationContents(annotations: Annotation[], onChangeAnnotations?: 
     }, [annotationOriginalContents])
 
     const setContent = (i: number, newContent: string) => {
-        annotationContents[i] = newContent;
+        annotationContents[i].value = newContent;
+        annotationContents[i].isJson = isJsonString(newContent);
         setAnnotationContents(annotationContents);
     }
 
@@ -173,7 +170,7 @@ function useAnnotationContents(annotations: Annotation[], onChangeAnnotations?: 
     }
 
     const saveContent = (i: number) => {
-        const newAnnotation = JSON.parse(annotationContents[i]);
+        const newAnnotation = JSON.parse(annotationContents[i].value);
         if (newAnnotation && onChangeAnnotations) {
             const newAnnotations = annotations.slice();
             newAnnotations[i] = newAnnotation;
