@@ -2,7 +2,7 @@ import useSWR from "swr"
 import {responseInterface} from "swr/dist/types";
 import {Rectangle, Size} from "./utils/shapes";
 import React from "react";
-import {ImageInfo} from "./utils/useImageInfo";
+import ColorHash from "color-hash";
 
 // @ts-ignore
 const fetcher = (...args) => fetch(...args).then(res => {
@@ -15,16 +15,23 @@ const fetcher = (...args) => fetch(...args).then(res => {
 
 
 // Types
+export const DEFAULT_ANNOTATION_COLOR = new ColorHash({lightness: 0.5, saturation: 0.7, hue: 220}).hex('');
+export const DEFAULT_ANNOTATION_SELECTED_COLOR = new ColorHash({lightness: 0.5, saturation: 1.0, hue: 200}).hex('');
 
-export declare type Image = {
+export interface Image {
     element: HTMLImageElement,
     width: number,
     height: number,
 }
 
-export declare type ImageData = {
-    annotations?: Rectangle[],
+export interface ImageData {
+    annotations?: Annotation[],
     tags?: string[],
+}
+
+export interface Annotation extends Rectangle {
+    color?: string,
+    label?: string
 }
 
 // Hooks API
@@ -72,7 +79,7 @@ export function useImage(key?: string | null): [Image | null] {
     return [state];
 }
 
-export function useImageData(key?: string | null): [ImageData|null, (data: ImageData) => void] {
+export function useImageData(key?: string | null): [ImageData | null, (data: ImageData) => void] {
     const url = key ? '/api/files/image_data/' + key : '';
     const {data, mutate} = useSWR(url, fetcher)
     const setData = async (data: ImageData) => {

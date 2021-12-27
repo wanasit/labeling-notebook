@@ -12,13 +12,6 @@ import {NumberParam, StringParam, useQueryParam} from "use-query-params";
 import ImageDataEditor from "./components/ImageDataEditor";
 import {useImage, useImageData} from "./api";
 import AnnotatedImage from "./components/AnnotatedImage";
-import ColorHash from 'color-hash'
-
-const annotationColors = [
-    {lightness: 0.5, saturation: 0.7, hue: 220},
-    {lightness: 0.5, saturation: 1.0, hue: 200},
-]
-
 
 export default function App() {
     const [key, setKey] = useQueryParam('key', StringParam);
@@ -27,15 +20,7 @@ export default function App() {
     const [image] = useImage(key);
     const [imageData, setImageData] = useImageData(key);
 
-
     const annotations = imageData?.annotations || [];
-    const extendedAnnotations = useMemo(() => annotations.map((a, i) => {
-        const colorHash = i === selectedAnnotationIdx ?
-            new ColorHash(annotationColors[1]):
-            new ColorHash(annotationColors[0]);
-        return {...a, color: colorHash.hex('')}
-    }), [imageData, selectedAnnotationIdx]);
-
     const setAnnotations = (annotations: any[]) => {
         annotations.forEach(a => {
             delete a.color;
@@ -58,7 +43,6 @@ export default function App() {
         if (e.target !== document.body) {
             return;
         }
-
 
         if (e.key === 'Escape') {
             setSelectedAnnotationIdx(undefined);
@@ -110,7 +94,7 @@ export default function App() {
                         tags={tags}
                         onChangeTags={setTags}
 
-                        annotations={extendedAnnotations}
+                        annotations={annotations}
                         selectedAnnotation={selectedAnnotationIdx}
                         onSelectAnnotation={setSelectedAnnotationIdx}
                         onChangeAnnotations={setAnnotations}
@@ -122,7 +106,7 @@ export default function App() {
                         width={viewComponentsSize.center.width}
                         height={viewComponentsSize.center.height}
                         image={image}
-                        annotations={extendedAnnotations}
+                        annotations={annotations}
                         selectedAnnotation={selectedAnnotationIdx}
                         onSelectAnnotation={setSelectedAnnotationIdx}
                         onChangeAnnotations={setAnnotations}

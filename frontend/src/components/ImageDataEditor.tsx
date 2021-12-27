@@ -9,10 +9,7 @@ import {Rectangle} from "../utils/shapes";
 
 import Creatable from 'react-select/creatable';
 import {Button} from "react-bootstrap";
-
-interface Annotation extends Rectangle {
-    color?: string
-}
+import {Annotation, DEFAULT_ANNOTATION_COLOR, DEFAULT_ANNOTATION_SELECTED_COLOR} from "../api";
 
 export interface ImageInfo {
     name: string
@@ -80,12 +77,16 @@ export default function ImageDataEditor(props: {
             <h5>Annotations:</h5>
             {
                 annotations.map((annotation, i) => {
+
+                    const selected = selectedAnnotation === i;
+                    const color = annotation.color || (selected ? DEFAULT_ANNOTATION_SELECTED_COLOR : DEFAULT_ANNOTATION_COLOR)
+                    const label = annotation.label || `at (x=${annotation.x}, y=${annotation.y})`
                     return <Collapsible
                         key={i}
                         trigger={
                             <div>
-                                <AnnotationColorCode style={{backgroundColor: annotation.color || 'white'}}/>
-                                <span>Annotation (at <i>x={annotation.x}</i>, <i>y={annotation.y})</i></span>
+                                <AnnotationColorCode style={{backgroundColor: color}}/>
+                                <span>Annotation: <i>{label}</i></span>
                             </div>
                         }
                         transitionTime={100}
@@ -148,7 +149,6 @@ function useAnnotationContents(annotations: Annotation[], onChangeAnnotations?: 
     const annotationOriginalContents: string[] = useMemo(() => annotations.map(annotation => {
         const annotationContent = {...annotation};
         const rectInfo = `{\n  "x":${annotation['x']}, "y":${annotation['y']}, "width":${annotation['width']}, "height":${annotation['height']},\n`
-        delete annotationContent['color'];
         delete annotationContent['x'];
         delete annotationContent['y'];
         delete annotationContent['width'];

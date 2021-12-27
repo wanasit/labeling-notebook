@@ -7,6 +7,34 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import {BsFolder2, BsFolder2Open, BsImage} from "react-icons/bs";
 import styled from "styled-components";
 
+
+export default function ImageBrowser(props: {
+    onSelectImage?: (imagePath: string) => void,
+}) {
+
+    const {data} = useFileList();
+    const files = data ? data : [];
+    return <Wrapper>
+        <FileBrowser
+            files={files}
+            filterRenderer={() => <div/>}
+            detailRenderer={() => <div/>}
+            icons={{
+                Image: <BsImage/>,
+                Folder: <BsFolder2/>,
+                FolderOpen: <BsFolder2Open/>,
+            }}
+            onSelect={fileOrFolder => {
+                console.log(fileOrFolder);
+                if (fileOrFolder) {
+                    return props.onSelectImage ? props.onSelectImage(fileOrFolder.key) : null;
+                }
+            }}
+        />
+    </Wrapper>
+};
+
+
 const Wrapper = styled.div`
     padding: 0;
     overflow-y: scroll;
@@ -37,32 +65,4 @@ const Wrapper = styled.div`
         }
     }
 `;
-
-
-export default function ImageBrowser(props: {
-    onSelectImage?: (imagePath: string) => void,
-}) {
-
-    const {data} = useFileList();
-    const files = data ? data : [];
-    return <Wrapper>
-        <FileBrowser
-            files={files}
-            filterRenderer={() => <div/>}
-            detailRenderer={() => <div/>}
-            icons={{
-                Image: <BsImage/>,
-                Folder: <BsFolder2/>,
-                FolderOpen: <BsFolder2Open/>,
-            }}
-            onSelect={fileOrFolder => {
-                console.log(fileOrFolder);
-                if (fileOrFolder) {
-                    return props.onSelectImage ? props.onSelectImage(fileOrFolder.key) : null;
-                }
-            }}
-        />
-    </Wrapper>
-};
-
 

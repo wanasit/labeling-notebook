@@ -2,17 +2,13 @@ import React from "react";
 import {Image, Layer, Rect, Stage, Transformer} from "react-konva";
 import {
     applyTransformation,
-    DEFAULT_EMPTY_RECT,
     Point,
     Rectangle, revertTransformation,
-    Size,
     transformationFittingToFrame
 } from "../../utils/shapes";
 import styled from "styled-components";
-
-interface Annotation extends Rectangle {
-    color?: string
-}
+import ComponentAnnotation from "./ComponentAnnotation";
+import {Annotation, DEFAULT_ANNOTATION_COLOR, DEFAULT_ANNOTATION_SELECTED_COLOR} from "../../api";
 
 
 interface LoadedImageElement {
@@ -37,7 +33,8 @@ export default function AnnotatedImage(props: {
 }) {
     const {image, width, height, annotations, onChangeAnnotations} = props;
     const selectedAnnotation = props.selectedAnnotation;
-    const onSelectAnnotation = props.onSelectAnnotation || ((index) => {});
+    const onSelectAnnotation = props.onSelectAnnotation || ((index) => {
+    });
 
     const [draggingBegin, setDraggingBegin] = React.useState<any>(null);
     const [draggingCurrent, setDraggingCurrent] = React.useState<any>(null);
@@ -115,16 +112,16 @@ export default function AnnotatedImage(props: {
                 />
                 {
                     annotations.map((rect, i) => {
-                        const key = JSON.stringify(rect);
-                        return <Annotation
-                            key={key}
-                            color={ rect.color || '#00000ff' }
-                            shapeProps={applyTransformation(frameTransform, rect)}
+                        const selected = selectedAnnotation === i;
+                        const color = rect.color || (selected ? DEFAULT_ANNOTATION_SELECTED_COLOR : DEFAULT_ANNOTATION_COLOR)
+
+                        return <ComponentAnnotation
+                            key={i}
+                            color={color}
+                            rect={applyTransformation(frameTransform, rect)}
                             isSelected={i === selectedAnnotation}
-                            onSelect={() => {
-                                onSelectAnnotation(i);
-                            }}
-                            onChange={(newAttrs: any) => {
+                            onSelect={() => onSelectAnnotation(i) }
+                            onRectChange={(newAttrs: any) => {
                                 const rects = annotations.slice();
                                 rects[i] = revertTransformation(frameTransform, newAttrs);
                                 if (onChangeAnnotations) {
@@ -152,81 +149,6 @@ const ImageFrame = styled.div`
     width: 100%;
     background-color:#eee;
 `;
-
-const Annotation = (props: {
-    shapeProps: any,
-    color: string
-    isSelected: any,
-    onSelect: any,
-    onChange: any,
-}) => {
-    const {shapeProps, color, isSelected, onSelect, onChange} = props;
-    const shapeRef: any = React.useRef();
-    const trRef: any = React.useRef();
-
-    React.useEffect(() => {
-        if (isSelected) {
-            // we need to attach transformer manually
-            trRef.current.nodes([shapeRef.current]);
-            trRef.current.getLayer().batchDraw();
-        }
-    }, [isSelected]);
-
-    return (
-        <React.Fragment>
-            <Rect
-                fill={color}
-                opacity={0.5}
-                onClick={onSelect}
-                onTap={onSelect}
-                ref={shapeRef}
-                {...shapeProps}
-                draggable={isSelected}
-                onDragEnd={(e) => {
-                    onChange({
-                        ...shapeProps,
-                        x: e.target.x(),
-                        y: e.target.y(),
-                    });
-                }}
-                onTransformEnd={(e) => {
-                    // transformer is changing scale of the node
-                    // and NOT its width or height
-                    // but in the store we have only width and height
-                    // to match the data better we will reset scale on transform end
-                    const node = shapeRef.current;
-                    const scaleX = node.scaleX();
-                    const scaleY = node.scaleY();
-
-                    // we will reset it back
-                    node.scaleX(1);
-                    node.scaleY(1);
-                    onChange({
-                        ...shapeProps,
-                        x: node.x(),
-                        y: node.y(),
-                        // set minimal value
-                        width: Math.max(5, node.width() * scaleX),
-                        height: Math.max(node.height() * scaleY),
-                    });
-                }}
-            />
-            {isSelected && (
-                <Transformer
-                    ref={trRef}
-                    rotateEnabled={false}
-                    boundBoxFunc={(oldBox, newBox) => {
-                        // limit resize
-                        if (newBox.width < 5 || newBox.height < 5) {
-                            return oldBox;
-                        }
-                        return newBox;
-                    }}
-                />
-            )}
-        </React.Fragment>
-    );
-};
 
 
 function rectangleFromTwoPoint(p1: Point, p2: Point): Rectangle {
