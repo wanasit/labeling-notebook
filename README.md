@@ -4,6 +4,9 @@ A web-based image annotation/labelling tool for small projects (inspired by Jupy
 
 It allows you to browse and update image annotations.
 
+<kbd><img width="1200" alt="labelling_notebook_screenshot" src="https://user-images.githubusercontent.com/1537162/147520343-61e58b87-955b-4639-94ee-f82a8c276b8b.png"></kbd>
+
+
 ## Usage
 
 Install the `labelling-notebook` package from with pip (Python3).
