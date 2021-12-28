@@ -4,6 +4,9 @@ A web-based image annotation/labelling tool for small projects (inspired by Jupy
 
 It allows you to browse and update image annotations.
 
+<kbd><img width="1200" alt="labelling_notebook_screenshot" src="https://user-images.githubusercontent.com/1537162/147520343-61e58b87-955b-4639-94ee-f82a8c276b8b.png"></kbd>
+
+
 ## Usage
 
 Install the `labelling-notebook` package from with pip (Python3).
@@ -29,8 +32,8 @@ The labelling notebook reads and saves an image information in
 **a json file with the same name**. e.g.
 
 ```bash
-directory/cat_01.jpg
-directory/cat_01.json  # <-- `cat_01.jpg`s labeled data
+directory/pets_01.jpg
+directory/pets_01.json  # <-- `cat_01.jpg`s annotation data
 ```
 
 ```json
