@@ -28,8 +28,9 @@ def main():
 
 
 def run_notebook(args):
+    instant_path = os.path.abspath(args.root)
     app = create_app(
-        instance_path=args.root,
+        instance_path=instant_path,
         static_folder=args.frontend,
     )
 

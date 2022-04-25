@@ -25,6 +25,14 @@ export default function App() {
         setImageData({...imageData, annotations})
     }
 
+    const updateSelectedAnnotation = (update: Object) => {
+        if (selectedAnnotationIdx !== null && selectedAnnotationIdx !== undefined) {
+            const newAnnotations = annotations.slice();
+            newAnnotations[selectedAnnotationIdx] = {...newAnnotations[selectedAnnotationIdx], ...update};
+            setAnnotations(newAnnotations);
+        }
+    }
+
     const tags = imageData?.tags || [];
     const setTags = (tags: any) => {
         setImageData({...imageData, tags})
@@ -52,6 +60,26 @@ export default function App() {
             }
 
             setSelectedAnnotationIdx(undefined);
+        }
+
+        if (e.key === 'ArrowDown' && selectedAnnotationIdx != null) {
+            const annotation = annotations[selectedAnnotationIdx];
+            updateSelectedAnnotation({y: annotation.y + 1});
+        }
+
+        if (e.key === 'ArrowUp' && selectedAnnotationIdx != null) {
+            const annotation = annotations[selectedAnnotationIdx];
+            updateSelectedAnnotation({y: annotation.y - 1});
+        }
+
+        if (e.key === 'ArrowLeft' && selectedAnnotationIdx != null) {
+            const annotation = annotations[selectedAnnotationIdx];
+            updateSelectedAnnotation({x: annotation.x - 1});
+        }
+
+        if (e.key === 'ArrowRight' && selectedAnnotationIdx != null) {
+            const annotation = annotations[selectedAnnotationIdx];
+            updateSelectedAnnotation({x: annotation.x - 1});
         }
     }
 
