@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "labelling-notebook"
-version = "0.2.2"
+version = "0.2.3"
 description = "An image annotation or labelling tool for small project"
 authors = ["Wanasit "]
 license = "MIT License"
