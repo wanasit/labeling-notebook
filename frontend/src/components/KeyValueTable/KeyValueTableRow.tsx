@@ -5,12 +5,12 @@ import styled from "styled-components";
 export default function KeyValueTableRow(props: {
     dataKey?: string,
     dataValue?: string | number,
+    readonly?: boolean,
     autofocusKey?: boolean,
     autofocusValue?: boolean,
-    readonly?: boolean | ((key: string, value: any) => boolean),
     onKeyValueChange?: (newValue?: KeyValuePair, currentValue?: KeyValuePair) => any
 }) {
-    const {dataKey, dataValue, autofocusKey = false, autofocusValue = false, onKeyValueChange = () => null} = props;
+    const {dataKey, dataValue, readonly = false, autofocusKey = false, autofocusValue = false, onKeyValueChange = () => null} = props;
     const [currentKey, setCurrentKey] = useState(dataKey ?? '');
     const [currentValue, setCurrentValue] = useState(dataValue ?? '');
 
@@ -34,7 +34,7 @@ export default function KeyValueTableRow(props: {
             return onKeyValueChange([newKey, dataValue ?? ''], dataKey ? [dataKey, dataValue] : undefined)
         }
 
-    }, [dataKey, onKeyValueChange]);
+    }, [dataKey, dataValue, onKeyValueChange]);
 
     const onValueBlur = useCallback((event) => {
         const newValue = event.target.value;
@@ -42,22 +42,22 @@ export default function KeyValueTableRow(props: {
             return onKeyValueChange([dataKey, newValue], dataKey ? [dataKey, dataValue] : undefined)
         }
 
-    }, [dataValue, onKeyValueChange]);
+    }, [dataKey, dataValue, onKeyValueChange]);
 
     return <tr key={dataKey}>
         <td>
-            <input autoFocus={autofocusKey} type="text" name="key" value={currentKey} onChange={e => setCurrentKey(e.target.value)}
+            <input autoFocus={autofocusKey} type="text" name="key" disabled={readonly} value={currentKey} onChange={e => setCurrentKey(e.target.value)}
                    onBlur={onKeyBlur}/>
         </td>
         <td>
-            <input autoFocus={autofocusValue} type="text" name="name" value={currentValue} onChange={e => setCurrentValue(e.target.value)}
+            <input autoFocus={autofocusValue} type="text" name="name" disabled={readonly} value={currentValue} onChange={e => setCurrentValue(e.target.value)}
                    onBlur={onValueBlur}/>
         </td>
         <td>
-            <StyledRemoveButton tabIndex={-1} onClick={e => onKeyValueChange(
+            {!readonly && <StyledRemoveButton tabIndex={-1} onClick={e => onKeyValueChange(
                 undefined,
                 (dataKey !== undefined) ? [dataKey, dataValue] : undefined
-            )}/>
+            )}/>}
         </td>
     </tr>
 }

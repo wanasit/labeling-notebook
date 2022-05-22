@@ -1,6 +1,6 @@
 import useSWR from "swr"
 import {responseInterface} from "swr/dist/types";
-import {Rectangle, Size} from "./utils/shapes";
+import {Rectangle} from "./utils/shapes";
 import React from "react";
 import ColorHash from "color-hash";
 

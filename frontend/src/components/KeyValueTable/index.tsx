@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from "react";
+import React, {useCallback, useMemo, useState} from "react";
 import styled from "styled-components";
 import ResizableTable from "./ResizableTable";
 import KeyValueTableRow from "./KeyValueTableRow";
@@ -9,16 +9,15 @@ export type DataObject = { [key: string]: any }
 
 export default function KeyValueTable(props: {
     data?: DataObject,
-    readonly?: boolean | ((key: string, value: any) => boolean),
+    readonlyKeys?: string[],
     onDataChange?: (newData: DataObject) => boolean
 }) {
-    const {data, onDataChange = () => null} = props;
+    const {data, readonlyKeys = [], onDataChange = () => null} = props;
     const [isAddingValue, setAddingValue] = useState(false);
     const [lastUpdatedKey, setLastUpdatedKey] = useState<string|null>(null);
 
     const onKeyValueUpdate = useCallback((newValue?: KeyValuePair, currentValue?: KeyValuePair) => {
         const newData = {...data};
-        console.log([newValue, currentValue])
         if (currentValue) {
             const [key, _] = currentValue;
             delete newData[key];
@@ -36,8 +35,18 @@ export default function KeyValueTable(props: {
 
 
     const kvPair = useMemo(() =>{
-        return Object.entries(data || {}).sort();
-    }, [data]) ;
+        const entries = Object.entries(data || {}).sort().map(([k, v]) => [k, v, false]);
+
+        readonlyKeys.forEach(key => {
+            const index = entries.findIndex((e) => e[0] === key);
+            if (index >= 0) {
+                const [k, v] = entries.splice(index, 1)[0];
+                entries.push([k, v, true]);
+            }
+        });
+
+        return entries;
+    }, [data, readonlyKeys]) ;
 
     return <StyledKeyValueTable className='kv-table'>
         <ResizableTable
@@ -49,11 +58,12 @@ export default function KeyValueTable(props: {
                     onClick={(e) => setAddingValue(true)}/>}
         >
             {isAddingValue && <KeyValueTableRow autofocusKey={true} dataKey={undefined} dataValue={undefined} onKeyValueChange={onKeyValueUpdate}/>}
-            {kvPair.map(([key, value], i) => {
+            {kvPair.map(([key, value, readonly], i) => {
                 return <KeyValueTableRow
                     autofocusValue={key === lastUpdatedKey}
                     dataKey={key}
                     dataValue={value}
+                    readonly={ readonly }
                     onKeyValueChange={onKeyValueUpdate}/>
             })
             }
@@ -83,13 +93,17 @@ const StyledKeyValueTable = styled.div`
         
         input {
             border: 1px solid rgba(0, 0, 0, 0);
+            background-color: none;
             width: 100%;
+            
+            &:disabled {
+                background-color: rgba(0, 0, 0, 0);
+            }
         }
         
         .resize-handle {
             border-right: 1px solid #ccc;
         }
-       
     }
 `;
 

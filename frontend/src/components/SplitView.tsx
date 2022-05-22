@@ -1,8 +1,6 @@
-import React, {createRef, useEffect, useLayoutEffect, useState} from "react";
+import React, {createRef, useCallback, useEffect, useLayoutEffect, useState} from "react";
 import styled from "styled-components";
 import {Size} from "../utils/shapes";
-
-const MIN_WIDTH = 75;
 
 
 export interface SplitViewComponentsSize {
@@ -20,14 +18,13 @@ export interface SplitViewProps {
     onComponentsResize?: (size: SplitViewComponentsSize) => void;
 }
 
-
 export const SplitView: React.FunctionComponent<SplitViewProps> = (
     {
         leftPane,
         rightPane,
         className,
         componentsSize,
-        onComponentsResize,
+        onComponentsResize = () => null,
         children,
     }) => {
     const splitPaneRef = createRef<HTMLDivElement>();
@@ -36,57 +33,59 @@ export const SplitView: React.FunctionComponent<SplitViewProps> = (
     const leftWidth = componentsSize.left.width;
     const rightWidth = componentsSize.right.width;
 
-    const onMove = (clientX: number) => {
+    const setComponentsSize = useCallback((newLeftWidth: number, newRightWidth: number) => {
+        if (!splitPaneRef.current) {
+            return;
+        }
+        console.log('setComponentsSize');
+        let height = splitPaneRef.current.clientHeight;
+        let totalWidth = splitPaneRef.current.clientWidth;
+        let newCenterWidth = totalWidth - newRightWidth - newLeftWidth;
+        onComponentsResize({
+            left: {height, width: newLeftWidth},
+            center: {height, width: newCenterWidth},
+            right: {height, width: newRightWidth}
+        });
+    }, [splitPaneRef, onComponentsResize])
+
+    const onMove = useCallback((clientX: number) => {
         if (!dragging || !splitPaneRef.current) {
             return;
         }
 
         let newLeftWidth = leftWidth;
         let newRightWidth = rightWidth;
-        if (dragging.resizingTarget == 'leftPane') {
+        if (dragging.resizingTarget === 'leftPane') {
             newLeftWidth = leftWidth + clientX - dragging.xPosition;
         }
 
-        if (dragging.resizingTarget == 'rightPane') {
+        if (dragging.resizingTarget === 'rightPane') {
             newRightWidth = rightWidth - clientX + dragging.xPosition;
         }
 
-        setSideViewsSize(newLeftWidth, newRightWidth);
+        setComponentsSize(newLeftWidth, newRightWidth);
         setDragging({...dragging, xPosition: clientX});
-    };
-
-    const setSideViewsSize = (newLeftWidth: number, newRightWidth: number) => {
-        if (!splitPaneRef.current) {
-            return;
-        }
-
-        let height = splitPaneRef.current.clientHeight;
-        let totalWidth = splitPaneRef.current.clientWidth;
-        let newCenterWidth = totalWidth - newRightWidth - newLeftWidth;
-        if (onComponentsResize) {
-            onComponentsResize({
-                left: {height, width: newLeftWidth},
-                center: {height, width: newCenterWidth},
-                right: {height, width: newRightWidth}
-            })
-        }
-    }
+    }, [dragging, splitPaneRef, leftWidth, rightWidth, setDragging, setComponentsSize]);
 
 
-    const onMouseMove = (e: MouseEvent) => {
+    const onMouseMove = useCallback((e: MouseEvent) => {
         e.preventDefault();
         onMove(e.clientX);
-    };
+    }, [onMove]);
 
-    const onTouchMove = (e: TouchEvent) => {
+    const onTouchMove = useCallback((e: TouchEvent) => {
         onMove(e.touches[0].clientX);
-    };
+    }, [onMove]);
 
-    const onMouseUp = () => {
+    const onMouseUp = useCallback(() => {
         setDragging(null);
-    };
+    }, [setDragging]);
 
-    React.useEffect(() => {
+    const onResize = useCallback(() => {
+        return setComponentsSize(leftWidth, rightWidth);
+    }, [leftWidth, rightWidth, setComponentsSize]);
+
+    useEffect(() => {
         document.addEventListener("mousemove", onMouseMove);
         document.addEventListener("touchmove", onTouchMove);
         document.addEventListener("mouseup", onMouseUp);
@@ -96,26 +95,30 @@ export const SplitView: React.FunctionComponent<SplitViewProps> = (
             document.removeEventListener("touchmove", onTouchMove);
             document.removeEventListener("mouseup", onMouseUp);
         };
-    });
+    }, [onMouseMove, onTouchMove, onMouseUp]);
 
     useLayoutEffect(() => {
         if (splitPaneRef.current) {
-
-            const measure = () => window.requestAnimationFrame(
-                () => setSideViewsSize(leftWidth, rightWidth));
-            measure();
-            window.addEventListener("resize", measure);
-            window.addEventListener("scroll", measure);
+            window.addEventListener("resize", onResize);
+            window.addEventListener("scroll", onResize);
             return () => {
-                window.removeEventListener("resize", measure);
-                window.removeEventListener("scroll", measure);
+                window.removeEventListener("resize", onResize);
+                window.removeEventListener("scroll", onResize);
             };
         }
-    }, [splitPaneRef]);
+    }, [splitPaneRef, onResize]);
+
+
+    useEffect(() => {
+        // Initial setup when height < 0, we need to init them the certain size
+        if (splitPaneRef.current && componentsSize.center.height < 0) {
+            onResize();
+        }
+    }, [componentsSize, splitPaneRef, onResize]);
 
     return (
         <SplitViewDiv className={`${className ?? ""}`} ref={splitPaneRef}>
-            <SidePane width={leftWidth} setWidth={(newLeftWidth) => setSideViewsSize(newLeftWidth, rightWidth)}>
+            <SidePane width={leftWidth} setWidth={(newLeftWidth) => setComponentsSize(newLeftWidth, rightWidth)}>
                 {leftPane}
             </SidePane>
             <Divider
@@ -129,7 +132,7 @@ export const SplitView: React.FunctionComponent<SplitViewProps> = (
                     onDraggingStart={xPosition => setDragging({xPosition, resizingTarget: 'rightPane'})}
                     onDraggingEnd={() => setDragging(null)}
                 />
-                <SidePane width={rightWidth} setWidth={(newRightWidth) => setSideViewsSize(leftWidth, newRightWidth)}>
+                <SidePane width={rightWidth} setWidth={(newRightWidth) => setComponentsSize(leftWidth, newRightWidth)}>
                     {rightPane}
                 </SidePane>
             </>
