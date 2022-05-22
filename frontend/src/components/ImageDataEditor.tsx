@@ -1,55 +1,33 @@
 import React, {useMemo, useState} from "react";
 import styled from "styled-components";
-import Collapsible from "react-collapsible";
-import AceEditor from "react-ace";
-
-import "ace-builds/src-noconflict/mode-json";
-import "ace-builds/src-noconflict/theme-github";
 
 import Creatable from 'react-select/creatable';
-import {Button} from "react-bootstrap";
-import {Annotation, DEFAULT_ANNOTATION_COLOR, DEFAULT_ANNOTATION_SELECTED_COLOR, Image} from "../api";
+import {Annotation, DEFAULT_ANNOTATION_COLOR, DEFAULT_ANNOTATION_SELECTED_COLOR, Image, ImageData} from "../api";
+import KeyValueTable from "./KeyValueTable";
 
 
 export default function ImageDataEditor(props: {
-
     image?: Image,
-
-    tags: string[],
-    onChangeTags?: (tags: string[]) => void,
-
-    annotations: Annotation[],
-    selectedAnnotation?: number | null,
-    onSelectAnnotation?: (index?: number) => void
-    onChangeAnnotations?: (annotations: Annotation[]) => void,
+    imageData?: ImageData,
+    selectedAnnotationIdx?: number,
+    onImageDataChange?: (update: ImageData) => any,
 }) {
-
     const {
         image,
-        tags,
-        annotations,
-        selectedAnnotation,
-        onSelectAnnotation = () => null,
-        onChangeTags = () => null,
-        onChangeAnnotations = () => null
+        imageData,
+        selectedAnnotationIdx,
+        onImageDataChange = (update: ImageData) => null,
     } = props;
 
-    const [options, setOptions] = useTagsAsOptions(tags, onChangeTags);
-    const [annotationContents, setAnnotationContent, resetAnnotationContent, saveAnnotationContent] =
-        useAnnotationContents(annotations, onChangeAnnotations);
+    const [options, setOptions] = useTagsAsOptions(imageData, onImageDataChange);
+    const [selectedAnnotation, updateSelectedAnnotation] = useSelectedAnnotation(
+        selectedAnnotationIdx, imageData, onImageDataChange);
 
-    const clearAnnotationSelection = (i: number) => onSelectAnnotation(undefined);
-    const setAnnotationSelection = (i: number) => onSelectAnnotation(i);
-
+    const keyValues = Object.entries(selectedAnnotation ?? {});
     return <ImageDataFrame>
-
         {image && <HeaderSection>
             <h4>{image.key}</h4>
             <p>{image.width} x {image.height}</p>
-        </HeaderSection>
-        }
-
-        <Section>
             <h5>Tags:</h5>
             <Creatable
                 isMulti={true}
@@ -57,53 +35,16 @@ export default function ImageDataEditor(props: {
                 onChange={(x) => setOptions(x)}
                 formatCreateLabel={(newLabel) => `Add tag "${newLabel}"`}
             />
-        </Section>
+        </HeaderSection>
+        }
 
         <Section>
-            <h5>Annotations:</h5>
-            {
-                annotations.map((annotation, i) => {
-
-                    const selected = selectedAnnotation === i;
-                    const color = annotation.color || (selected ? DEFAULT_ANNOTATION_SELECTED_COLOR : DEFAULT_ANNOTATION_COLOR)
-                    const label = annotation.label || `at (x=${annotation.x}, y=${annotation.y})`
-                    return <Collapsible
-                        key={i}
-                        trigger={
-                            <div>
-                                <AnnotationColorCode style={{backgroundColor: color}}/>
-                                <span>Annotation: <i>{label}</i></span>
-                            </div>
-                        }
-                        transitionTime={100}
-                        openedClassName={'open'}
-                        open={selectedAnnotation === i}
-                        onOpening={() => setAnnotationSelection(i)}
-                        onClosing={() => {
-                            clearAnnotationSelection(i);
-                            resetAnnotationContent(i);
-                        }}
-                    >
-                        {
-                            annotationContents[i] && <>
-                                <AceEditor
-                                    value={annotationContents[i].value}
-                                    mode="json"
-                                    theme="github"
-                                    width="100%"
-                                    height={`${annotationContents[i].value.split('\n').length * 20}px`}
-                                    onChange={(value) => setAnnotationContent(i, value)}
-                                />
-                                <Button size="sm" variant="primary"
-                                        disabled={!annotationContents[i].isJson}
-                                        onClick={() => {
-                                            clearAnnotationSelection(i);
-                                            saveAnnotationContent(i);
-                                        }}>Save</Button>
-                            </>
-                        }
-                    </Collapsible>
-                })
+            {selectedAnnotation &&
+                <KeyValueTable
+                    key={selectedAnnotationIdx}
+                    data={selectedAnnotation}
+                    onDataChange={(data) => updateSelectedAnnotation(data as Annotation) }
+                />
             }
         </Section>
     </ImageDataFrame>
@@ -119,66 +60,44 @@ interface AnnotationContent {
     isJson: boolean,
 }
 
-function useTagsAsOptions(tags: string[], onChangeTags?: (tags: string[]) => void):
+function useTagsAsOptions(imageData?: ImageData | null, onImageDataChange?: (update: ImageData) => any):
     [TagOption[], (options: readonly TagOption[]) => void] {
-
-    const options = useMemo(() => tags.map((tag) => ({value: tag, label: tag})), [tags]) ;
+    const tags = imageData?.tags || [];
+    const options = useMemo(() => tags.map((tag) => ({value: tag, label: tag})), [tags]);
     const setOptions = (options: readonly TagOption[]) => {
-        if (onChangeTags) {
+        if (onImageDataChange) {
             const tags = options.map(o => o.value);
-            onChangeTags(tags);
+            onImageDataChange({tags: tags});
         }
     }
 
     return [options, setOptions]
 }
 
-function useAnnotationContents(annotations: Annotation[], onChangeAnnotations: (annotations: Annotation[]) => void):
-    [AnnotationContent[], (i: number, newContent: string) => void, (i: number) => void, (i: number) => void] {
 
-    const annotationOriginalContents: AnnotationContent[] = useMemo(() => annotations.map(annotation => {
-        const annotationContent = {...annotation};
-        const rectInfo = `{\n  "x":${annotation['x']}, "y":${annotation['y']}, "width":${annotation['width']}, "height":${annotation['height']},\n`
-        delete annotationContent['x'];
-        delete annotationContent['y'];
-        delete annotationContent['width'];
-        delete annotationContent['height'];
+function useSelectedAnnotation(
+    selectedAnnotationIdx?: number,
+    imageData?: ImageData,
+    onImageDataChange?: (update: ImageData) => any
+): [Annotation | undefined, (newAnnotation: Annotation) => boolean] {
 
-        const value = JSON.stringify(annotationContent, null, 2)
-                .replace("{", rectInfo)
-                .replace("\n\n", "\n");
-        return {
-            value: value,
-            isJson: true
-        };
-    }), [annotations]);
-
-    const [annotationContents, setAnnotationContents] = useState(annotationOriginalContents);
-    React.useEffect(() => {
-        setAnnotationContents(annotationOriginalContents);
-    }, [annotationOriginalContents])
-
-    const setContent = (i: number, newContent: string) => {
-        annotationContents[i].value = newContent;
-        annotationContents[i].isJson = isJsonString(newContent);
-        setAnnotationContents(annotationContents);
+    if (selectedAnnotationIdx === undefined || imageData === undefined) {
+        return [undefined, () => true];
     }
 
-    const resetContent = (i: number) => {
-        annotationContents[i] = annotationOriginalContents[i];
-        setAnnotationContents(annotationContents);
-    }
-
-    const saveContent = (i: number) => {
-        const newAnnotation = JSON.parse(annotationContents[i].value);
-        if (newAnnotation && onChangeAnnotations) {
+    const annotations = imageData?.annotations || [];
+    const selectedAnnotation = annotations[selectedAnnotationIdx];
+    const updateSelectedAnnotation = (newAnnotation: Annotation) => {
+        if (onImageDataChange) {
             const newAnnotations = annotations.slice();
-            newAnnotations[i] = newAnnotation;
-            onChangeAnnotations(newAnnotations);
+            newAnnotations[selectedAnnotationIdx] = newAnnotation;
+            onImageDataChange({annotations: newAnnotations});
         }
+
+        return true;
     }
 
-    return [annotationContents, setContent, resetContent, saveContent];
+    return [selectedAnnotation, updateSelectedAnnotation]
 }
 
 function isJsonString(str: string) {
@@ -238,14 +157,4 @@ const Section = styled.div`
     padding: 10px;
     margin-bottom: 20px;
     color: rgba(17,24,39, 1);
-`;
-
-const AnnotationColorCode = styled.span`
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 5px;
-    top: 3px;
-    position: relative;
 `;

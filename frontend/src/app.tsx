@@ -1,5 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
-import ReactDOM from 'react-dom';
+import React, {useEffect, useState} from 'react';
 
 import styled from "styled-components";
 
@@ -7,15 +6,28 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-keyed-file-browser/dist/react-keyed-file-browser.css';
 
 import ImageBrowser from "./components/ImageBrowser";
-import {SplitViewComponentsSize, SplitView} from "./components/SplitView";
+import {SplitView, SplitViewComponentsSize} from "./components/SplitView";
 import {NumberParam, StringParam, useQueryParam} from "use-query-params";
 import ImageDataEditor from "./components/ImageDataEditor";
 import {useImage, useImageData} from "./api";
 import AnnotatedImage from "./components/AnnotatedImage";
 
+
+function useCheckedStringParam(name: string, defaultValue?: string): [string | undefined, (newValue?: string) => void] {
+    const [rawValue, setValue] = useQueryParam(name, StringParam);
+    const value = (rawValue !== null && rawValue !== undefined) ? rawValue : defaultValue;
+    return [value, setValue]
+}
+
+function useCheckedNumberParam(name: string, defaultValue?: number): [number | undefined, (newValue?: number) => void] {
+    const [rawValue, setValue] = useQueryParam(name, NumberParam);
+    const value = (rawValue !== null && rawValue !== undefined) ? rawValue : defaultValue;
+    return [value, setValue]
+}
+
 export default function App() {
-    const [key, setKey] = useQueryParam('key', StringParam);
-    const [selectedAnnotationIdx, setSelectedAnnotationIdx] = useQueryParam('index', NumberParam);
+    const [key, setKey] = useCheckedStringParam('key');
+    const [selectedAnnotationIdx, setSelectedAnnotationIdx] = useCheckedNumberParam('index');
 
     const [image] = useImage(key);
     const [imageData, setImageData] = useImageData(key);
@@ -26,16 +38,11 @@ export default function App() {
     }
 
     const updateSelectedAnnotation = (update: Object) => {
-        if (selectedAnnotationIdx !== null && selectedAnnotationIdx !== undefined) {
+        if (selectedAnnotationIdx !== undefined) {
             const newAnnotations = annotations.slice();
             newAnnotations[selectedAnnotationIdx] = {...newAnnotations[selectedAnnotationIdx], ...update};
             setAnnotations(newAnnotations);
         }
-    }
-
-    const tags = imageData?.tags || [];
-    const setTags = (tags: any) => {
-        setImageData({...imageData, tags})
     }
 
     const [viewComponentsSize, setViewComponentsSize] = useState<SplitViewComponentsSize>({
@@ -103,7 +110,7 @@ export default function App() {
                         <ImageBrowser
                             onSelectImage={imagePath => {
                                 setKey(imagePath)
-                                setSelectedAnnotationIdx(null);
+                                setSelectedAnnotationIdx(undefined);
                             }}
                         />
                     </SidebarFrame>
@@ -111,14 +118,9 @@ export default function App() {
                 rightPane={
                     image && <ImageDataEditor
                         image={image}
-
-                        tags={tags}
-                        onChangeTags={setTags}
-
-                        annotations={annotations}
-                        selectedAnnotation={selectedAnnotationIdx}
-                        onSelectAnnotation={setSelectedAnnotationIdx}
-                        onChangeAnnotations={setAnnotations}
+                        imageData={imageData}
+                        selectedAnnotationIdx={selectedAnnotationIdx}
+                        onImageDataChange={(update) => setImageData({...imageData, ...update})}
                     />
                 }
             >

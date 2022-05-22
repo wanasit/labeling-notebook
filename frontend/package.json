@@ -22,7 +22,7 @@
     "swr": "^0.3.2",
     "use-query-params": "^1.2.3"
   },
-  "proxy": "http://localhost:9888",
+  "proxy": "http://127.0.0.1:9888",
   "scripts": {
     "start": "react-scripts start",
     "build": "GENERATE_SOURCEMAP=false && react-scripts build",

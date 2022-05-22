@@ -1,1 +1,1 @@
-{"annotations": [{"height": 837, "label": "dog", "width": 469, "x": 839, "y": 363}, {"x": 431, "y": 468, "width": 428, "height": 742, "label": "dog"}, {"height": 369, "label": "cat", "width": 469, "x": 1263, "y": 830}]}
+{"annotations": [{"height": "837", "label": "dog", "width": "469", "x": "839", "y": "363"}, {"height": 742, "label": "dog", "width": 428, "x": 438, "y": 471}, {"height": 369, "label": "cat", "width": 469, "x": 1263, "y": 830}], "tags": []}

@@ -81,7 +81,7 @@ export function useImage(key?: string | null): [Image | null] {
     return [state];
 }
 
-export function useImageData(key?: string | null): [ImageData | null, (data: ImageData) => void] {
+export function useImageData(key?: string | null): [ImageData | undefined, (data: ImageData) => void] {
     const url = key ? '/api/files/image_data/' + key : '';
     const {data, mutate} = useSWR(url, fetcher)
     const setData = async (data: ImageData) => {

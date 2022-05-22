@@ -1,9 +1,9 @@
-import React from "react";
+import React, {useCallback} from "react";
 import {Image, Layer, Rect, Stage, Transformer} from "react-konva";
 import {
-    applyTransformation,
+    applyTransformation, DEFAULT_IDENTITY_TRANSFORMATION,
     Point,
-    Rectangle, revertTransformation,
+    Rectangle, revertTransformation, Transformation,
     transformationFittingToFrame
 } from "../../utils/shapes";
 import styled from "styled-components";
@@ -27,39 +27,38 @@ export default function AnnotatedImage(props: {
     width: number,
     height: number,
     annotations: Annotation[],
-    selectedAnnotation?: number | null,
+    selectedAnnotation?: number,
     onSelectAnnotation?: (index?: number) => void
     onChangeAnnotations?: (annotations: Annotation[]) => void
 }) {
     const {image, width, height, annotations, onChangeAnnotations} = props;
+
     const selectedAnnotation = props.selectedAnnotation;
     const onSelectAnnotation = props.onSelectAnnotation || ((index) => {
     });
 
     const [draggingBegin, setDraggingBegin] = React.useState<any>(null);
     const [draggingCurrent, setDraggingCurrent] = React.useState<any>(null);
-    if (!image.element) {
-        // Todo: handle image loading or empty
-        return <ImageFrame/>
-    }
-
     const frameSize = {width, height};
-    const frameTransform = transformationFittingToFrame(frameSize, image);
 
-    const onMouseDown = (e: any) => {
+
+    const frameTransform: Transformation = image.element ? transformationFittingToFrame(frameSize, image)
+        : DEFAULT_IDENTITY_TRANSFORMATION;
+
+    const onMouseDown = useCallback((e: any) => {
         // deselect when clicked on empty area
         const clickedOnEmpty = (e.target === e.target.getStage() || e.target.image);
         if (clickedOnEmpty) {
-            if (selectedAnnotation && selectedAnnotation >= 0) {
+            if (selectedAnnotation !== undefined) {
                 onSelectAnnotation(undefined);
             } else {
                 setDraggingBegin({x: e.evt.layerX, y: e.evt.layerY});
                 setDraggingCurrent({x: e.evt.layerX, y: e.evt.layerY});
             }
         }
-    }
+    }, [selectedAnnotation, onSelectAnnotation, setDraggingBegin, setDraggingCurrent])
 
-    const onMouseUp = (e: any) => {
+    const onMouseUp = useCallback((e: any) => {
         if (draggingBegin) {
             setDraggingBegin(null);
             setDraggingCurrent(null);
@@ -76,27 +75,23 @@ export default function AnnotatedImage(props: {
             }
             onSelectAnnotation(rects.length - 1);
         }
-    }
+    }, [annotations, draggingBegin, draggingCurrent, frameTransform, setDraggingBegin, setDraggingCurrent, onChangeAnnotations])
 
-    const onMouseLeave = (e: any) => {
+    const onMouseLeave = useCallback((e: any) => {
         setDraggingBegin(null);
         setDraggingCurrent(null);
-    }
+    }, [selectedAnnotation, setDraggingCurrent])
 
-    const onMouseMove = (e: any) => {
+    const onMouseMove = useCallback((e: any) => {
         if (draggingBegin) {
             setDraggingCurrent({x: e.evt.layerX, y: e.evt.layerY});
         }
+    }, [draggingBegin, setDraggingCurrent])
+
+    if (!image.element) {
+        // Todo: handle image loading or empty
+        return <ImageFrame/>
     }
-
-    const checkDeselect = (e: any) => {
-        // deselect when clicked on empty area
-        const clickedOnEmpty = (e.target === e.target.getStage() || e.target.image);
-        if (clickedOnEmpty) {
-            onSelectAnnotation(undefined);
-        }
-    };
-
 
     return <ImageFrame>
         <Stage
@@ -104,6 +99,7 @@ export default function AnnotatedImage(props: {
             onMouseDown={onMouseDown}
             onMouseUp={onMouseUp}
             onMouseMove={onMouseMove}
+            onMouseLeave={onMouseLeave}
         >
             <Layer>
                 <Image
@@ -120,7 +116,7 @@ export default function AnnotatedImage(props: {
                             color={color}
                             rect={applyTransformation(frameTransform, rect)}
                             isSelected={i === selectedAnnotation}
-                            onSelect={() => onSelectAnnotation(i) }
+                            onSelect={() => onSelectAnnotation(i)}
                             onRectChange={(newAttrs: any) => {
                                 const rects = annotations.slice();
                                 rects[i] = revertTransformation(frameTransform, newAttrs);

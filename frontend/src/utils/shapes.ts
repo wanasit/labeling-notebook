@@ -17,6 +17,9 @@ export const DEFAULT_EMPTY_RECT: Rectangle = {
     x: 0, y: 0, height: 0, width: 0,
 }
 
+export const DEFAULT_IDENTITY_TRANSFORMATION: Transformation = {
+    offset: {x: 0, y: 0}, scale: 1.0
+}
 
 export interface Transformation {
     readonly offset: Point,
