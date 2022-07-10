@@ -86,7 +86,7 @@ export default function App() {
 
         if (e.key === 'ArrowRight' && selectedAnnotationIdx != null) {
             const annotation = annotations[selectedAnnotationIdx];
-            updateSelectedAnnotation({x: annotation.x - 1});
+            updateSelectedAnnotation({x: annotation.x + 1});
         }
     }
 

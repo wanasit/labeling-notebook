@@ -24,22 +24,17 @@ export default function KeyValueTableRow(props: {
 
 
     const onKeyBlur = useCallback((event) => {
-        const newKey = event.target.value;
-
-        if (!dataKey && !newKey) {
-            return onKeyValueChange(undefined, undefined);
+        let newKey = event.target.value || '';
+        newKey = newKey.trim();
+        if (newKey && newKey !== dataKey) {
+            return onKeyValueChange([newKey, dataValue ?? ''], dataKey ? [dataKey, dataValue] : undefined);
         }
-
-        if (!newKey && newKey !== dataKey) {
-            return onKeyValueChange([newKey, dataValue ?? ''], dataKey ? [dataKey, dataValue] : undefined)
-        }
-
     }, [dataKey, dataValue, onKeyValueChange]);
 
     const onValueBlur = useCallback((event) => {
         const newValue = event.target.value;
         if (dataKey && newValue !== dataValue) {
-            return onKeyValueChange([dataKey, newValue], dataKey ? [dataKey, dataValue] : undefined)
+            return onKeyValueChange([dataKey, newValue], [dataKey, dataValue]);
         }
 
     }, [dataKey, dataValue, onKeyValueChange]);
