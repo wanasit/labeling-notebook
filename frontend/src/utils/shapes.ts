@@ -26,6 +26,27 @@ export interface Transformation {
     readonly scale: number
 }
 
+export function movePoint(offsetX: number, offsetY: number, original?: Point): Point {
+    return {
+        x: (original? original.x : 0) + offsetX,
+        y: (original? original.y : 0) + offsetY
+    }
+}
+
+export function transformationWithAdjustment(base: Transformation, zoomScale: number, viewOffset?: Point): Transformation {
+    let paddingX= base.offset.x * zoomScale;
+    let paddingY = base.offset.y * zoomScale;
+    if (viewOffset) {
+        paddingX += viewOffset.x;
+        paddingY += viewOffset.y;
+    }
+
+    return {
+        offset: {x: paddingX, y: paddingY},
+        scale: base.scale * zoomScale
+    }
+}
+
 export function transformationFittingToFrame(frame: Size, subject: Size): Transformation {
     let scale = frame.width / subject.width;
     const outputSubjectHeight = subject.height * scale;

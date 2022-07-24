@@ -1,7 +1,6 @@
 import React from "react";
 import FileBrowser from "react-keyed-file-browser";
 import {useFileList} from "../api";
-import {generatePath, useHistory, useRouteMatch} from 'react-router-dom'
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import {BsFolder2, BsFolder2Open, BsImage} from "react-icons/bs";

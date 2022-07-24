@@ -51,6 +51,9 @@ export default function App() {
         center: {width: 100, height: -1}
     })
 
+    const [keyShiftHeld, setKeyShiftHeld] = useState<boolean>(false);
+    const [keyCtrlHeld, setKeyCtrlHeld] = useState<boolean>(false);
+    const [keyCmdHeld, setKeyCmdHeld] = useState<boolean>(false);
     const onKeyPress = (e: KeyboardEvent) => {
         if (e.target !== document.body) {
             return;
@@ -88,12 +91,36 @@ export default function App() {
             const annotation = annotations[selectedAnnotationIdx];
             updateSelectedAnnotation({x: annotation.x + 1});
         }
+
+        if (e.key === 'Shift') {
+            setKeyShiftHeld(true);
+        }
+        if (e.key === 'Control') {
+            setKeyCtrlHeld(true);
+        }
+        if (e.key === 'Meta') {
+            setKeyCmdHeld(true);
+        }
+    }
+
+    const onKeyUp = (e: KeyboardEvent) => {
+        if (e.key === 'Shift') {
+            setKeyShiftHeld(false);
+        }
+        if (e.key === 'Control') {
+            setKeyCtrlHeld(false);
+        }
+        if (e.key === 'Meta') {
+            setKeyCmdHeld(false);
+        }
     }
 
     useEffect(() => {
         window.addEventListener('keydown', onKeyPress);
+        window.addEventListener('keyup', onKeyUp);
         return () => {
             window.removeEventListener('keydown', onKeyPress);
+            window.removeEventListener('keyup', onKeyUp);
         };
     })
 
@@ -128,6 +155,7 @@ export default function App() {
                     <AnnotatedImage
                         width={viewComponentsSize.center.width}
                         height={viewComponentsSize.center.height}
+                        isAnnotating={keyCtrlHeld || keyCmdHeld}
                         image={image}
                         annotations={annotations}
                         selectedAnnotation={selectedAnnotationIdx}
@@ -136,7 +164,6 @@ export default function App() {
                     />
                 </ImageFrame>}
             </SplitView>
-
         </AppContainer>
     );
 }

@@ -18,10 +18,11 @@ export default function ImageDataEditor(props: {
         selectedAnnotationIdx,
         onImageDataChange = () => null,
     } = props;
-
     const [options, setOptions] = useTagsAsOptions(imageData, onImageDataChange);
     const [selectedAnnotation, updateSelectedAnnotation] = useSelectedAnnotation(
         selectedAnnotationIdx, imageData, onImageDataChange);
+
+    const annotationCount = imageData?.annotations?.length ?? 0;
 
     return <ImageDataFrame>
         {image && <HeaderSection>
@@ -29,8 +30,9 @@ export default function ImageDataEditor(props: {
             <p>{image.width} x {image.height}</p>
             <h5>Tags:</h5>
             <Creatable
-                styles = {{
-                    control: (provided: any, state: any) => ({...provided,
+                styles={{
+                    control: (provided: any, state: any) => ({
+                        ...provided,
                         backgroundColor: '#eee',
                         border: 'solid 1px #aaa !important',
                         boxShadow: 'none !important'
@@ -44,28 +46,28 @@ export default function ImageDataEditor(props: {
         </HeaderSection>
         }
 
-        { selectedAnnotationIdx !== undefined && <Section>
-            <h5>Annotation: {selectedAnnotationIdx + 1} (of {imageData?.annotations?.length})</h5>
-            {selectedAnnotation &&
-                <KeyValueTable
-                    key={selectedAnnotationIdx}
-                    data={selectedAnnotation}
-                    readonlyKeys={['x', 'y', 'width', 'height']}
-                    onDataChange={(data) => updateSelectedAnnotation(data as Annotation) }
-                />
-            }
-        </Section> }
+        {selectedAnnotationIdx !== undefined ? <Section>
+                <h5>Annotation: {selectedAnnotationIdx + 1} (of {annotationCount})</h5>
+                {selectedAnnotation &&
+                    <KeyValueTable
+                        key={selectedAnnotationIdx}
+                        data={selectedAnnotation}
+                        readonlyKeys={['x', 'y', 'width', 'height']}
+                        onDataChange={(data) => updateSelectedAnnotation(data as Annotation)}
+                    />
+                }
+            </Section> :
+            <NoteSection>
+                <p>To create an annotation, hold <span>Ctrl</span> or <span>⌘</span> key and select empty area.</p>
+                {(annotationCount > 0) && <p>Select an annotation to move or update its key/value.</p>}
+            </NoteSection>
+        }
     </ImageDataFrame>
 };
 
 interface TagOption {
     value: string,
     label: string
-}
-
-interface AnnotationContent {
-    value: string,
-    isJson: boolean,
 }
 
 function useTagsAsOptions(imageData?: ImageData | null, onImageDataChange?: (update: ImageData) => any):
@@ -108,15 +110,6 @@ function useSelectedAnnotation(
     return [selectedAnnotation, updateSelectedAnnotation]
 }
 
-function isJsonString(str: string) {
-    try {
-        JSON.parse(str);
-    } catch (e) {
-        return false;
-    }
-    return true;
-}
-
 const ImageDataFrame = styled.div`
     position: relative;
     overflow-x: hidden;
@@ -137,18 +130,28 @@ const HeaderSection = styled.div`
     }
 `;
 
+const NoteSection = styled.div`
+    padding: 10px;
+    margin-bottom: 20px;
+    color: rgba(100,100,100, 1);
+    
+    span {
+        border: solid 1px;
+        padding: 1px 3px;
+    }
+`;
+
 const Section = styled.div`
     padding: 10px;
     margin-bottom: 20px;
     color: rgba(17,24,39, 1);
     
     h5 {
-        font-size: 1rem;
+        font-size: 1.2rem;
     }
     
     .kv-table {
         margin-top: 10px;
-        
         th { 
             font-size: 1rem;
         }
