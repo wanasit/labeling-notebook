@@ -25,7 +25,6 @@ export default function ImageBrowser(props: {
                 FolderOpen: <BsFolder2Open/>,
             }}
             onSelect={fileOrFolder => {
-                console.log(fileOrFolder);
                 if (fileOrFolder) {
                     return props.onSelectImage ? props.onSelectImage(fileOrFolder.key) : null;
                 }

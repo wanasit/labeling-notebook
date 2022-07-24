@@ -122,35 +122,6 @@ const ImageDataFrame = styled.div`
     overflow-x: hidden;
     height: 100%;
     width: 100%;
-    
-    .Collapsible {
-    
-        padding: 0px;
-        
-        &:hover {
-            background: #eee;
-        }
-        
-        &.open {
-            background: #e8e8e8;
-        }
-        
-        >span {
-            width: 100%;
-            display: block;
-            margin-bottom: 5px;
-            padding: 8px 8px;
-        }
-        
-        >div {
-            padding: 0px 8px;
-        }
-        
-        button {
-            float: right;
-            margin: 8px 0px;
-        }
-    }
 `;
 
 const HeaderSection = styled.div`

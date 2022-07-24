@@ -43,3 +43,6 @@ def _try_open_browser(args):
         return
 
     webbrowser.open_new(f'http://localhost:{args.port}')
+
+if __name__ == '__main__':
+    main()

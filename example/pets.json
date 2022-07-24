@@ -1,1 +1,1 @@
-{"annotations": [{"height": "837", "label": "dog", "width": "469", "x": "839", "y": "363"}, {"height": 742, "label": "dog", "width": 428, "x": 438, "y": 471}, {"height": 389, "label": "cat", "width": 469, "x": 1263, "y": 810}], "tags": ["cat-vs-dog"]}
+{"annotations": [{"height": 837, "label": "dog", "width": 469, "x": 831, "y": 358}, {"height": 742, "label": "dog", "width": 428, "x": 438, "y": 471}, {"height": 389, "label": "cat", "width": 469, "x": 1263, "y": 810}], "tags": ["cat-vs-dog"]}
