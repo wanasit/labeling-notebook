@@ -4,7 +4,7 @@ import logging
 import webbrowser
 
 from threading import Timer
-from labelling.notebook import create_app
+from labeling.notebook import create_app
 
 module_dir = os.path.dirname(__file__)
 
@@ -17,9 +17,9 @@ def main():
     parser.add_argument('--debug', action='store_true')
     parser.add_argument('--no-browser', action='store_true')
     parser.add_argument('--port', default='9888', type=int,
-                        help="The port the labelling notebook server will listen on (default=9888)")
+                        help="The port the labeling notebook server will listen on (default=9888)")
     parser.add_argument('--ip', default='127.0.0.1', type=str,
-                        help="The IP address the labelling notebook server will listen on (default=127.0.0.1)")
+                        help="The IP address the labeling notebook server will listen on (default=127.0.0.1)")
     parser.add_argument('--frontend', default=os.path.join(module_dir, '../frontend/build'),
                         help="frontend built directory")
 

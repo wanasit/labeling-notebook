@@ -15,7 +15,7 @@ def create_app(
                 instance_relative_config=True)
 
     # Apply API blueprints
-    from labelling.notebook import api_files
+    from labeling.notebook import api_files
     app.register_blueprint(api_files.bp)
     # app.register_blueprint(other_api.bp)
 

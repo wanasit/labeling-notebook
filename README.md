@@ -1,34 +1,34 @@
-# Labelling Notebook
+# Labeling Notebook
 
-A web-based image annotation/labelling tool for small projects (inspired by Jupyter notebook).
+A web-based image annotation/labeling tool for small projects (inspired by Jupyter notebook).
 
 It allows you to browse and update image annotations.
 
-<kbd><img width="1200" alt="labelling_notebook_screenshot" src="https://user-images.githubusercontent.com/1537162/147520343-61e58b87-955b-4639-94ee-f82a8c276b8b.png"></kbd>
+<kbd><img width="1200" alt="labeling_notebook_screenshot" src="https://user-images.githubusercontent.com/1537162/147520343-61e58b87-955b-4639-94ee-f82a8c276b8b.png"></kbd>
 
 
 ## Usage
 
-Install the `labelling-notebook` package from with pip (Python3).
+Install the `labeling-notebook` package from with pip (Python3).
 
 ```bash
-pip install labelling-notebook
+pip install labeling-notebook
 ```
 
-With the package installed, use `label` command to start the labelling notebook:
+With the package installed, use `label` command to start the labeling notebook:
 
 ```bash
 # cd <your directory with images>
 label .
 ```
 
-The command should start the labelling notebook application at `http://localhost:9888`.
+The command should start the labeling notebook application at `http://localhost:9888`.
 
 (See `label -h` for other command line options)
 
 ## Data Format
 
-The labelling notebook reads and saves an image information in
+The labeling notebook reads and saves an image information in
 **a json file with the same name**. e.g.
 
 ```bash

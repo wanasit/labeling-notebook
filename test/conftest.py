@@ -3,7 +3,7 @@ import shutil
 
 import pytest
 
-from labelling.notebook import create_app
+from labeling.notebook import create_app
 
 module_dir = os.path.dirname(__file__)
 

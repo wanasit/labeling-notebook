@@ -1,16 +1,16 @@
 [tool.poetry]
-name = "labelling-notebook"
-version = "0.3.2"
-description = "An image annotation or labelling tool for small project"
+name = "labeling-notebook"
+version = "0.4.0"
+description = "An image annotation or labeling tool for small project"
 authors = ["Wanasit "]
 license = "MIT License"
 packages = [
-    { include = "labelling" },
+    { include = "labeling" },
 ]
 include = ["frontend/build/**/*.*"]
 
 [tool.poetry.scripts]
-label = 'labelling.__main__:main'
+label = 'labeling.__main__:main'
 
 [tool.poetry.dependencies]
 python = "^3.7"
