@@ -3,6 +3,7 @@ import os
 from typing import Dict
 
 from flask import Blueprint, request, abort, jsonify, current_app, send_file
+from labeling.notebook import utils
 
 bp = Blueprint("files", __name__, url_prefix="/api/files")
 
@@ -48,27 +49,23 @@ def list_files():
 
 @bp.route("/image/<path:key>", methods=("GET",))
 def get_image(key):
-    image_path = _resolve_input_key(key)['path']
-
-    if not os.path.isfile(image_path):
+    image_info = utils.resolve_image_info(key)
+    if image_info is None:
         return abort(404, "Image not found")
 
-    return send_file(image_path)
+    return send_file(image_info.path)
 
 
 @bp.route("/image_data/<path:key>", methods=("GET",))
 def get_image_data(key):
-    parsed_path = _resolve_input_key(key)
-    image_path = parsed_path['path']
-    data_path = parsed_path['path_without_ext'] + '.json'
-
-    if not os.path.isfile(image_path):
+    image_info = utils.resolve_image_info(key)
+    if image_info is None:
         return abort(404, "Image not found")
 
-    if not os.path.isfile(data_path):
+    if not os.path.isfile(image_info.data_path):
         return abort(404, "Image data not found")
 
-    with open(data_path, 'r') as f:
+    with open(image_info.data_path, 'r') as f:
         return json.load(f)
 
 

@@ -2,7 +2,7 @@
 name = "labeling-notebook"
 version = "0.4.0"
 description = "An image annotation or labeling tool for small project"
-authors = ["Wanasit "]
+authors = ["Wanasit T"]
 license = "MIT License"
 packages = [
     { include = "labeling" },
