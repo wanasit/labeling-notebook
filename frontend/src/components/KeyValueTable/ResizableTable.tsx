@@ -111,53 +111,54 @@ export default function ResizableTable(props: {
 
 
 const StyledResizableTable = styled.div`
-    table {
-        width: 100%;
-        overflow: auto;
-        display: grid;
-        grid-template-columns:
+  table {
+    width: 100%;
+    overflow: auto;
+    display: grid;
+    grid-template-columns:
             minmax(100px, 1fr)
             minmax(100px, 1fr)
             40px;
-            
-        thead, tbody, tr {
-            display: contents;
-        }
-        
-        th, td {
-            display: block;
-            min-width: 100px;
-        }
-        
-        th:last-child, td:last-child {
-            min-width: 0px;
-            text-align: center;
-        }
-        
-        th {
-            position: relative;
-            span {
-                display: block;
-            }
-        }
-        
-        .resize-handle {
-            display: block;
-            position: absolute;
-            cursor: col-resize;
-            width: 7px;
-            top: 0;
-            right: 0;
-            z-index: 1;
-            border-right: 2px solid transparent;
-            
-            &:hover {
-                border-color: #aaa;
-            }
-            
-            &.active {
-                border-color: #888;
-            }
-        }
+
+    thead, tbody, tr {
+      display: contents;
     }
+
+    th, td {
+      display: block;
+      min-width: 100px;
+    }
+
+    th:last-child, td:last-child {
+      min-width: 0px;
+      text-align: center;
+    }
+
+    th {
+      position: relative;
+
+      span {
+        display: block;
+      }
+    }
+
+    .resize-handle {
+      display: block;
+      position: absolute;
+      cursor: col-resize;
+      width: 7px;
+      top: 0;
+      right: 0;
+      z-index: 1;
+      border-right: 2px solid transparent;
+
+      &:hover {
+        border-color: #aaa;
+      }
+
+      &.active {
+        border-color: #888;
+      }
+    }
+  }
 `
