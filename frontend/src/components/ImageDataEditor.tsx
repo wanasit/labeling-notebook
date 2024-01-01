@@ -2,7 +2,7 @@ import React, {useMemo} from "react";
 import styled from "styled-components";
 
 import Creatable from 'react-select/creatable';
-import {Annotation, Image, ImageData} from "../api";
+import {Annotation, Image, ImageData, usePluginMap} from "../api";
 import KeyValueTable from "./KeyValueTable";
 
 
@@ -11,18 +11,22 @@ export default function ImageDataEditor(props: {
     imageData?: ImageData,
     selectedAnnotationIdx?: number,
     onImageDataChange?: (update: ImageData) => any,
+    onPluginApply?: (pluginName: string, pluginInfo: any) => any,
 }) {
     const {
         image,
         imageData,
         selectedAnnotationIdx,
         onImageDataChange = () => null,
+        onPluginApply = () => null,
     } = props;
     const [options, setOptions] = useTagsAsOptions(imageData, onImageDataChange);
     const [selectedAnnotation, updateSelectedAnnotation] = useSelectedAnnotation(
         selectedAnnotationIdx, imageData, onImageDataChange);
 
     const annotationCount = imageData?.annotations?.length ?? 0;
+    const {data} = usePluginMap();
+    const plugInData: [string, any][] = data ? Object.entries(data).sort() : [];
 
     return <ImageDataFrame>
         {image && <HeaderSection>
@@ -58,8 +62,21 @@ export default function ImageDataEditor(props: {
                 }
             </Section> :
             <NoteSection>
-                <p>To create an annotation, hold <span>Ctrl</span> or <span>⌘</span> key and select empty area.</p>
-                {(annotationCount > 0) && <p>Select an annotation to move or update its key/value.</p>}
+                <div>
+                    <h5>Annotation</h5>
+                    {(annotationCount > 0) && <p>Select an annotation to move or update its key/value.</p>}
+                    <p>To create an annotation, hold <span>Ctrl</span> or <span>⌘</span> key and select empty area.</p>
+                </div>
+                {(plugInData && plugInData.length > 0) && <PluginOptions>
+                    <h5>Plug-in</h5>
+                    Select the following options to apply plug-in to the image:
+                    <ul>
+                        {plugInData.map(([name, info]) => <li key={name}>
+                            <button onClick={() => onPluginApply(name, info)}>{info['name'] || name}</button>
+                            : {info['description']}
+                        </li>)}
+                    </ul>
+                </PluginOptions>}
             </NoteSection>
         }
     </ImageDataFrame>
@@ -110,50 +127,80 @@ function useSelectedAnnotation(
     return [selectedAnnotation, updateSelectedAnnotation]
 }
 
+
 const ImageDataFrame = styled.div`
-    position: relative;
-    overflow-x: hidden;
-    height: 100%;
-    width: 100%;
+  position: relative;
+  overflow-x: hidden;
+  height: 100%;
+  width: 100%;
 `;
 
 const HeaderSection = styled.div`
-    padding: 20px 10px;
-    margin-bottom: 30px;
-    
-    color: rgba(200,200,200, 1);
-    background-color: rgba(17,24,39, 1);
-    
-    h5 {
-        margin-top: 20px;
-        font-size: 1rem;
-    }
+  padding: 20px 10px;
+  margin-bottom: 30px;
+
+  color: rgba(200, 200, 200, 1);
+  background-color: rgba(17, 24, 39, 1);
+
+  h5 {
+    margin-top: 20px;
+    font-size: 1rem;
+  }
 `;
 
 const NoteSection = styled.div`
-    padding: 10px;
+  padding: 10px;
+  margin-bottom: 20px;
+  color: rgba(100, 100, 100, 1);
+
+  span {
+    border: solid 1px;
+    padding: 1px 3px;
+  }
+
+  > div {
+    margin-bottom: 30px;
+  }
+
+  > p {
     margin-bottom: 20px;
-    color: rgba(100,100,100, 1);
-    
-    span {
-        border: solid 1px;
-        padding: 1px 3px;
+  }
+
+`;
+
+const PluginOptions = styled.div`
+  ul {
+    padding-left: 20px;
+
+    li {
+      margin: 10px 0;
     }
+  }
+
+  button {
+    color: rgba(80, 80, 80, 1);
+    background: none !important;
+    border: none;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+  }
 `;
 
 const Section = styled.div`
-    padding: 10px;
-    margin-bottom: 20px;
-    color: rgba(17,24,39, 1);
-    
-    h5 {
-        font-size: 1.2rem;
+  padding: 10px;
+  margin-bottom: 20px;
+  color: rgba(17, 24, 39, 1);
+
+  h5 {
+    font-size: 1.2rem;
+  }
+
+  .kv-table {
+    margin-top: 10px;
+
+    th {
+      font-size: 1rem;
     }
-    
-    .kv-table {
-        margin-top: 10px;
-        th { 
-            font-size: 1rem;
-        }
-    }
+  }
 `;

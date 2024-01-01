@@ -41,6 +41,10 @@ export function useFileList(): responseInterface<any, any> {
     return useSWR('/api/files', fetcher)
 }
 
+export function usePluginMap(): responseInterface<any, any> {
+    return useSWR('/api/plugins', fetcher)
+}
+
 export function useImage(key?: string | null): [Image | null] {
     // Ref: https://github.com/konvajs/use-image/blob/master/index.js
     const url = key ? '/api/files/image/' + key : null;
@@ -81,7 +85,7 @@ export function useImage(key?: string | null): [Image | null] {
     return [state];
 }
 
-export function useImageData(key?: string | null): [ImageData | undefined, (data: ImageData) => void] {
+export function useImageData(key?: string | null): [ImageData | undefined, (data: ImageData) => void, () => void] {
     const url = key ? '/api/files/image_data/' + key : '';
     const {data, mutate} = useSWR(url, fetcher)
     const setData = async (data: ImageData) => {
@@ -92,6 +96,19 @@ export function useImageData(key?: string | null): [ImageData | undefined, (data
 
         mutate({...data, ...newData})
     }
+    const reloadData = () => {
+        mutate();
+    }
 
-    return [data, setData];
+    return [data, setData, reloadData];
 }
+
+export function applyPlugIn(name: string, key: string): Promise<any> {
+    const url = `/api/plugins/${name}/apply/${key}`;
+    const data = {};
+    return fetch(url, {
+        method: "POST",
+        body: JSON.stringify(data)
+    });
+}
+

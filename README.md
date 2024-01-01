@@ -33,7 +33,7 @@ The labeling notebook reads and saves an image information in
 
 ```bash
 directory/pets_01.jpg
-directory/pets_01.json  # <-- `cat_01.jpg`s annotation data
+directory/pets_01.json  # <-- `pets_01.jpg`s annotation data
 ```
 
 ```json

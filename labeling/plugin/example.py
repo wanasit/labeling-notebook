@@ -4,7 +4,7 @@ This is a workable dummy implementation of a plugin that can be used for testing
 The actual plugin implementation should implement all methods in this module with the same specification.
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, Union
 
 
 def get_plugin_info(detailed: bool = False) -> Dict[str, Any]:
@@ -16,7 +16,7 @@ def get_plugin_info(detailed: bool = False) -> Dict[str, Any]:
     }
 
 
-def apply_plugin(image_path: str, image_data: Dict[str, Any] | None) -> Dict[str, Any] | None:
+def apply_plugin(image_path: str, image_data: Union[Dict[str, Any], None]) -> Union[Dict[str, Any], None]:
     """Applies the plugin to the image and modify the image data.
 
     Args:

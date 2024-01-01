@@ -17,12 +17,18 @@ discovered_plugins['example'] = example
 
 bp = Blueprint("plugins", __name__, url_prefix="/api/plugins")
 
+def _try_get_plugin_info(plugin, detailed=False):
+    try:
+        return plugin.get_plugin_info(detailed=detailed)
+    except:
+        return {'error': 'Plugin does not respond properly'}
+
 
 @bp.route("")
 def get_plugins():
     output = {}
     for name, plugin in discovered_plugins.items():
-        output[name] = plugin.get_plugin_info()
+        output[name] = _try_get_plugin_info(plugin, detailed=False)
     return jsonify(output)
 
 
@@ -32,7 +38,7 @@ def get_plugin_info(name):
         return abort(404, "Plugin not found")
 
     plugin = discovered_plugins[name]
-    output = plugin.get_plugin_info(detailed=True)
+    output = _try_get_plugin_info(plugin, detailed=True)
     return jsonify(output)
 
 

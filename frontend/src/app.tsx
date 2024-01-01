@@ -9,7 +9,7 @@ import ImageBrowser from "./components/ImageBrowser";
 import {SplitView, SplitViewComponentsSize} from "./components/SplitView";
 import {NumberParam, StringParam, useQueryParam} from "use-query-params";
 import ImageDataEditor from "./components/ImageDataEditor";
-import {useImage, useImageData} from "./api";
+import {applyPlugIn, useImage, useImageData, usePluginMap} from "./api";
 import AnnotatedImage from "./components/AnnotatedImage";
 
 
@@ -30,7 +30,12 @@ export default function App() {
     const [selectedAnnotationIdx, setSelectedAnnotationIdx] = useCheckedNumberParam('index');
 
     const [image] = useImage(key);
-    const [imageData, setImageData] = useImageData(key);
+    const [imageData, setImageData, reloadData] = useImageData(key);
+    const applyPluginToImage = (pluginName: string, pluginInfo: any) => {
+        if (key) {
+            applyPlugIn(pluginName, key).then(() => reloadData());
+        }
+    }
 
     const annotations = imageData?.annotations || [];
     const setAnnotations = (annotations: any[]) => {
@@ -148,6 +153,7 @@ export default function App() {
                         imageData={imageData}
                         selectedAnnotationIdx={selectedAnnotationIdx}
                         onImageDataChange={(update) => setImageData({...imageData, ...update})}
+                        onPluginApply={(pluginName, pluginInfo) => applyPluginToImage(pluginName, pluginInfo)}
                     />
                 }
             >
@@ -170,95 +176,97 @@ export default function App() {
 
 
 const AppContainer = styled.div`
-    height: 100vh;
-    
-    .Resizer {
-      background: #000;
-      opacity: 0.2;
-      z-index: 1;
-      -moz-box-sizing: border-box;
-      -webkit-box-sizing: border-box;
-      box-sizing: border-box;
-      -moz-background-clip: padding;
-      -webkit-background-clip: padding;
-      background-clip: padding-box;
-    }
-      
-    .Resizer:hover {
-      -webkit-transition: all 2s ease;
-      transition: all 2s ease;
-    }
-    
-    .Resizer.horizontal {
-      height: 11px;
-      margin: -5px 0;
-      border-top: 5px solid rgba(255, 255, 255, 0);
-      border-bottom: 5px solid rgba(255, 255, 255, 0);
-      cursor: row-resize;
-      width: 100%;
-    }
-    
-    .Resizer.horizontal:hover {
-      border-top: 5px solid rgba(0, 0, 0, 0.5);
-      border-bottom: 5px solid rgba(0, 0, 0, 0.5);
-    }
-    
-    .Resizer.vertical {
-      width: 11px;
-      margin: 0 -5px;
-      border-left: 5px solid rgba(255, 255, 255, 0);
-      border-right: 5px solid rgba(255, 255, 255, 0);
-      cursor: col-resize;
-    }
-    
-    .Resizer.vertical:hover {
-      border-left: 5px solid rgba(0, 0, 0, 0.5);
-      border-right: 5px solid rgba(0, 0, 0, 0.5);
-    }
-    .Resizer.disabled {
-      cursor: not-allowed;
-    }
-    .Resizer.disabled:hover {
-      border-color: transparent;
-    }
+  height: 100vh;
+
+  .Resizer {
+    background: #000;
+    opacity: 0.2;
+    z-index: 1;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    -moz-background-clip: padding;
+    -webkit-background-clip: padding;
+    background-clip: padding-box;
+  }
+
+  .Resizer:hover {
+    -webkit-transition: all 2s ease;
+    transition: all 2s ease;
+  }
+
+  .Resizer.horizontal {
+    height: 11px;
+    margin: -5px 0;
+    border-top: 5px solid rgba(255, 255, 255, 0);
+    border-bottom: 5px solid rgba(255, 255, 255, 0);
+    cursor: row-resize;
+    width: 100%;
+  }
+
+  .Resizer.horizontal:hover {
+    border-top: 5px solid rgba(0, 0, 0, 0.5);
+    border-bottom: 5px solid rgba(0, 0, 0, 0.5);
+  }
+
+  .Resizer.vertical {
+    width: 11px;
+    margin: 0 -5px;
+    border-left: 5px solid rgba(255, 255, 255, 0);
+    border-right: 5px solid rgba(255, 255, 255, 0);
+    cursor: col-resize;
+  }
+
+  .Resizer.vertical:hover {
+    border-left: 5px solid rgba(0, 0, 0, 0.5);
+    border-right: 5px solid rgba(0, 0, 0, 0.5);
+  }
+
+  .Resizer.disabled {
+    cursor: not-allowed;
+  }
+
+  .Resizer.disabled:hover {
+    border-color: transparent;
+  }
 `;
 
 const AppFrame = styled.div`
-    height: 100%;
+  height: 100%;
 `;
 
 const ImageFrame = styled.div`
-    height: 100%;
+  height: 100%;
 `;
 
 
 const ImageDataFrame = styled.div`
-    height: 100%;
+  height: 100%;
 `;
 
 
 const SidebarFrame = styled.div`
-    height: 100%;
-    overflow: scroll;
-    background-color: rgba(17,24,39, 1);
-    color: rgba(156,163,175, 1);
-    
-    .files {
-        tbody {
-            tr, tr a {
-                color: rgba(156,163,175, 1);
-            }
-            
-            tr:hover {
-                background-color: rgba(255, 255, 255, 0.05);
-            }
-            
-            tr.selected, tr.selected a {
-                rgba(229,231,235,1);
-                background-color: rgba(55,65,81,1);
-            }
-        }
+  height: 100%;
+  overflow: scroll;
+  background-color: rgba(17, 24, 39, 1);
+  color: rgba(156, 163, 175, 1);
+
+  .files {
+    tbody {
+      tr, tr a {
+        color: rgba(156, 163, 175, 1);
+      }
+
+      tr:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+      }
+
+      tr.selected, tr.selected a {
+        rgba(229, 231, 235, 1);
+        background-color: rgba(55, 65, 81, 1);
+      }
     }
+  }
 `;
 
 

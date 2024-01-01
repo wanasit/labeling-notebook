@@ -1,6 +1,6 @@
 import os
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 from flask import current_app
 
@@ -11,7 +11,7 @@ class ImageInfo:
     data_path: str
 
 
-def resolve_image_info(input_key: str) -> ImageInfo | None:
+def resolve_image_info(input_key: str) -> Union[ImageInfo, None]:
     image_path = os.path.join(current_app.instance_path, input_key)
 
     # TODO: Also check if the file is really an image
